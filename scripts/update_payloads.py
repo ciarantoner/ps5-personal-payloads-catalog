@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REPOS_DIR = ROOT / "repos"
 OUTPUT_FILE = ROOT / "payloads.json"
-CATALOG_NAME = "Personal PS5 Payloads List"
+CATALOG_NAME = "Personal Repository"
 API = "https://api.github.com"
 EXTENSIONS = (".elf", ".bin")
 
@@ -51,7 +51,7 @@ def gh_get(path: str) -> dict:
     req = urllib.request.Request(API + path)
     req.add_header("Accept", "application/vnd.github+json")
     req.add_header("X-GitHub-Api-Version", "2022-11-28")
-    req.add_header("User-Agent", "personal-ps5-payloads-list-updater")
+    req.add_header("User-Agent", "ps5-personal-payloads-repository-updater")
     token = os.environ.get("GITHUB_TOKEN")
     if token:
         req.add_header("Authorization", f"Bearer {token}")

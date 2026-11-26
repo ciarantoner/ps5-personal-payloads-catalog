@@ -1,4 +1,4 @@
-# Personal PS5 Payloads List
+# PS5 Personal Payloads Repository
 
 Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmgr`)**. You add GitHub repositories to the `repos/` folder, and a GitHub Action picks the `.elf`/`.bin` file from each one's latest release and rebuilds the catalog every 6 hours. The catalog is served through GitHub Pages.
 
@@ -16,7 +16,7 @@ Because the catalog always points to the latest release of each repository, Pros
 ### Using the page
 
 1. Create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission.
-2. Open `https://YOUR-USER.github.io/personal-ps5-payloads-list/manage/`, paste the token into **GitHub token** and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
+2. Open `https://YOUR-USER.github.io/ps5-personal-payloads-repository/manage/`, paste the token into **GitHub token** and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
 3. Paste one or more repository URLs (one per line) into **Add repositories**, click **Check**, then **Add**. All of them are saved in a single commit.
 
 Without a token, the page is read-only.
@@ -32,7 +32,7 @@ Either way, you never edit `payloads.json` yourself. It is filled in automatical
 In the Payload Manager, add this URL as a catalog source:
 
 ```
-https://YOUR-USER.github.io/personal-ps5-payloads-list/payloads.json
+https://YOUR-USER.github.io/ps5-personal-payloads-repository/payloads.json
 ```
 
 The page also shows this URL with a **Copy** button. Whenever a tracked repository publishes a new release, the catalog is updated automatically within 6 hours, and ProsperoMgr will offer the new version.

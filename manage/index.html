@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PS5 Payloads List</title>
+<title>PS5 Payloads Repository</title>
 <style>
   :root {
     --bg: #0d1017;
@@ -136,7 +136,7 @@
 <body>
 <main>
   <header>
-    <h1>Personal PS5 Payloads List</h1>
+    <h1>PS5 Personal Payloads Repository</h1>
     <p>Personal catalog for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
   </header>
 
@@ -171,7 +171,7 @@
       <summary>Target repository (auto-detected)</summary>
       <div class="row">
         <input id="ownerInput" placeholder="owner" aria-label="Owner">
-        <input id="repoNameInput" placeholder="personal-ps5-payloads-list" aria-label="Repository">
+        <input id="repoNameInput" placeholder="ps5-personal-payloads-repository" aria-label="Repository">
         <button id="saveTargetBtn" class="ghost">Apply</button>
       </div>
     </details>
@@ -228,7 +228,7 @@
     }
     return {
       owner: store.get(LS.owner) || owner,
-      repo: store.get(LS.repo) || repo || 'personal-ps5-payloads-list',
+      repo: store.get(LS.repo) || repo || 'ps5-personal-payloads-repository',
     };
   }
   let target = detectTarget();
@@ -636,7 +636,7 @@
 
   $('saveTargetBtn').addEventListener('click', () => {
     const owner = $('ownerInput').value.trim();
-    const repo = $('repoNameInput').value.trim() || 'personal-ps5-payloads-list';
+    const repo = $('repoNameInput').value.trim() || 'ps5-personal-payloads-repository';
     store.set(LS.owner, owner);
     store.set(LS.repo, repo);
     target = { owner, repo };
