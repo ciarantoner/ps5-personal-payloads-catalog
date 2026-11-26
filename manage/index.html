@@ -78,11 +78,7 @@
   .msg.err { background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .35); }
   .msg.info { background: rgba(59, 130, 246, .1); border: 1px solid rgba(59, 130, 246, .35); }
 
-  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .seg button { background: transparent; color: var(--muted); border-radius: 0; padding: 8px 14px; font-weight: 600; }
-  .seg button + button { border-left: 1px solid var(--border); }
-  .seg button.active { background: var(--accent); color: #fff; }
-  .seg button:disabled { opacity: .4; }
+  #modeBanner { margin: 0 0 20px; }
 
   .preview {
     margin-top: 14px;
@@ -126,8 +122,6 @@
     section { padding: 16px; }
     ul.repos li { flex-wrap: wrap; }
     .row > button { width: 100%; }
-    .seg { width: 100%; }
-    .seg button { flex: 1; }
   }
 </style>
 </head>
@@ -137,6 +131,8 @@
     <h1>Personal PS5 Payloads List</h1>
     <p>Personal catalog for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
   </header>
+
+  <div id="modeBanner" class="msg show info"></div>
 
   <section>
     <h2>Catalog URL</h2>
@@ -148,12 +144,30 @@
   </section>
 
   <section>
-    <h2>Write mode</h2>
-    <div class="seg" role="group" aria-label="Write mode">
-      <button id="modeGithub" type="button">Confirm on GitHub</button>
-      <button id="modeDirect" type="button">Direct (token)</button>
+    <h2 id="tokenSection"><span id="tokenDot" class="dot"></span> GitHub token</h2>
+    <div class="row">
+      <input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="Personal Access Token">
+      <button id="saveTokenBtn">Save</button>
+      <button id="clearTokenBtn" class="ghost">Remove</button>
     </div>
-    <p class="hint" id="modeHint"></p>
+    <p class="hint">
+      <b>You only need to do this once per browser.</b> The token stays saved here until it expires or you click <b>Remove</b>.
+    </p>
+    <p class="hint">
+      Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-Grained Token</a>
+      with access to <b>only</b> this repository and the <b>Contents: Read and write</b> permission.
+      It is stored only in this browser's <span class="mono">localStorage</span> and sent only to the GitHub API.
+      Every page under <span class="mono" id="originHint"></span> shares that storage, so keep the token's scope limited.
+    </p>
+    <details>
+      <summary>Target repository (auto-detected)</summary>
+      <div class="row">
+        <input id="ownerInput" placeholder="owner" aria-label="Owner">
+        <input id="repoNameInput" placeholder="personal-ps5-payloads-list" aria-label="Repository">
+        <button id="saveTargetBtn" class="ghost">Apply</button>
+      </div>
+    </details>
+    <div id="tokenMsg" class="msg"></div>
   </section>
 
   <section>
@@ -172,30 +186,6 @@
     <div id="listMsg" class="msg"></div>
   </section>
 
-  <section>
-    <h2><span id="tokenDot" class="dot"></span> GitHub token <span class="badge">optional</span></h2>
-    <div class="row">
-      <input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="Personal Access Token">
-      <button id="saveTokenBtn">Save</button>
-      <button id="clearTokenBtn" class="ghost">Remove</button>
-    </div>
-    <p class="hint">
-      Only needed for <b>Direct</b> mode. Use a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-Grained Token</a>
-      with access to <b>only</b> this repository and the <b>Contents: Read and write</b> permission.
-      It is stored only in this browser's <span class="mono">localStorage</span>, which every page under
-      <span class="mono" id="originHint"></span> shares, so keep the token's scope limited.
-    </p>
-    <details>
-      <summary>Target repository (auto-detected)</summary>
-      <div class="row">
-        <input id="ownerInput" placeholder="owner" aria-label="Owner">
-        <input id="repoNameInput" placeholder="personal-ps5-payloads-list" aria-label="Repository">
-        <button id="saveTargetBtn" class="ghost">Apply</button>
-      </div>
-    </details>
-    <div id="tokenMsg" class="msg"></div>
-  </section>
-
   <footer>Every change to the <span class="mono">repos/</span> folder triggers the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).</footer>
 </main>
 
@@ -204,7 +194,7 @@
   const API = 'https://api.github.com';
   const DIR = 'repos';
   const BRANCH = 'main';
-  const LS = { token: 'ps5pl.token', owner: 'ps5pl.owner', repo: 'ps5pl.repo', mode: 'ps5pl.mode' };
+  const LS = { token: 'ps5pl.token', owner: 'ps5pl.owner', repo: 'ps5pl.repo' };
   const EXT = /\.(elf|bin)$/i;
   const FILE_RE = /^([A-Za-z0-9][A-Za-z0-9-]*)__(.+)\.txt$/;
 
@@ -276,25 +266,21 @@
     return esc(e.message || String(e));
   }
 
-  // ---------- Write mode ----------
+  // ---------- Mode (read-only vs edit) ----------
   const hasToken = () => !!store.get(LS.token);
-  const mode = () => (hasToken() && store.get(LS.mode) !== 'github' ? 'direct' : 'github');
 
   function renderMode() {
-    const m = mode();
-    $('modeGithub').classList.toggle('active', m === 'github');
-    $('modeDirect').classList.toggle('active', m === 'direct');
-    $('modeDirect').disabled = !hasToken();
-    $('modeHint').innerHTML = m === 'direct'
-      ? `Changes are written straight to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using your token.`
-      : `No token needed. <b>Add</b> and <b>Remove</b> open GitHub with the change already filled in; just click <b>Commit changes</b> there.
-         Only the owner of <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> can commit — anyone else should
-         <a href="${esc(repoUrl())}/fork" target="_blank" rel="noopener">fork it</a> and use their fork's page.
-         ${hasToken() ? '' : 'Save a token below to enable Direct mode.'}`;
+    const banner = $('modeBanner');
+    if (hasToken()) {
+      banner.className = 'msg show ok';
+      banner.innerHTML = `<b>Edit mode</b> — changes are written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using the token saved in this browser.`;
+    } else {
+      banner.className = 'msg show info';
+      banner.innerHTML = `<b>Read-only mode.</b> To add or remove payloads, <a href="#tokenSection">save your GitHub token</a> below.
+        You only need to do it once in this browser.
+        Not your repository? <a href="${esc(repoUrl())}/fork" target="_blank" rel="noopener">Fork it</a> and use your fork's page.`;
+    }
   }
-
-  $('modeGithub').addEventListener('click', () => { store.set(LS.mode, 'github'); renderMode(); renderList(); });
-  $('modeDirect').addEventListener('click', () => { store.set(LS.mode, 'direct'); renderMode(); renderList(); });
 
   // ---------- repos/ folder state ----------
   let files = [];   // { name, path, sha, owner, repo, key }
@@ -339,7 +325,6 @@
       list.innerHTML = '<li class="empty">No repositories tracked yet.</li>';
       return;
     }
-    const removeLabel = mode() === 'direct' ? 'Remove' : 'Remove on GitHub';
     list.innerHTML = files.map((f, i) => {
       let title, badge, meta;
       if (f.key) {
@@ -356,7 +341,7 @@
       }
       return `<li>
         <div class="repo-info">${title}${badge}<div class="repo-meta">${meta}</div></div>
-        <button class="danger" data-remove="${i}">${removeLabel}</button>
+        ${hasToken() ? `<button class="danger" data-remove="${i}">Remove</button>` : ''}
       </li>`;
     }).join('');
   }
@@ -437,7 +422,6 @@
       pending = { owner: fo, repo: fr, key };
 
       const version = String(release.tag_name || '').replace(/^[vV](?=\d)/, '');
-      const addLabel = mode() === 'direct' ? 'Add' : 'Add on GitHub';
       preview.innerHTML = `
         <h3>${esc(info.name || fr)}</h3>
         <div class="repo-meta">${esc(info.full_name)}</div>
@@ -447,7 +431,11 @@
           <dt>File</dt><dd class="mono">${esc(asset.name)} (${(asset.size / 1024).toFixed(1)} KB)</dd>
           <dt>Published</dt><dd>${esc(new Date(release.published_at).toLocaleString())}</dd>
         </dl>
-        ${already ? '<span class="badge ok">Already in the list</span>' : `<button id="addBtn">${addLabel}</button>`}`;
+        ${already
+          ? '<span class="badge ok">Already in the list</span>'
+          : hasToken()
+            ? '<button id="addBtn">Add</button>'
+            : '<p class="hint">Valid payload. <a href="#tokenSection">Save your GitHub token</a> to add it.</p>'}`;
       preview.className = 'preview show';
       const addBtn = $('addBtn');
       if (addBtn) addBtn.addEventListener('click', addPending);
@@ -464,13 +452,6 @@
     const msg = $('addMsg');
     const name = fileNameFor(p.owner, p.repo);
     const content = `https://github.com/${p.owner}/${p.repo}\n`;
-
-    if (mode() === 'github') {
-      const url = `${repoUrl()}/new/${BRANCH}?filename=${encodeURIComponent(`${DIR}/${name}`)}&value=${encodeURIComponent(content)}`;
-      window.open(url, '_blank', 'noopener');
-      showMsg(msg, 'info', `GitHub opened in a new tab with <span class="mono">${DIR}/${esc(name)}</span> filled in. Click <b>Commit changes</b> there, then <b>Refresh</b> the list here.`);
-      return;
-    }
 
     const btn = $('addBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
@@ -500,12 +481,6 @@
     const label = f.key ? `${f.owner}/${f.repo}` : f.name;
     const msg = $('listMsg');
 
-    if (mode() === 'github') {
-      window.open(`${repoUrl()}/delete/${BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`, '_blank', 'noopener');
-      showMsg(msg, 'info', `GitHub opened in a new tab to delete <span class="mono">${esc(f.path)}</span>. Click <b>Commit changes</b> there, then <b>Refresh</b> here.`);
-      return;
-    }
-
     if (!confirm(`Remove ${label} from the list?`)) return;
     btn.disabled = true; btn.textContent = 'Removing…';
     try {
@@ -528,7 +503,6 @@
     const token = $('tokenInput').value.trim();
     if (!token) { showMsg(msg, 'err', 'Paste a token before saving.'); return; }
     store.set(LS.token, token);
-    store.set(LS.mode, 'direct');
     $('tokenInput').value = '';
     renderTarget();
     renderList();
@@ -537,7 +511,7 @@
       if (repo.permissions && repo.permissions.push === false) {
         showMsg(msg, 'err', `Token saved, but your account has no write access to <b>${esc(repo.full_name)}</b>. Fork it and use your fork's page.`);
       } else {
-        showMsg(msg, 'ok', `Token saved, with access to <b>${esc(repo.full_name)}</b>. Direct mode enabled.`);
+        showMsg(msg, 'ok', `Token saved, with access to <b>${esc(repo.full_name)}</b>. You won't be asked for it again in this browser.`);
       }
     } catch (e) {
       showMsg(msg, 'err', `Token saved, but verification failed: ${apiErrorText(e)}`);
@@ -548,6 +522,7 @@
     store.set(LS.token, '');
     renderTarget();
     renderList();
+    $('preview').className = 'preview';
     showMsg($('tokenMsg'), 'info', 'Token removed from this browser.');
   });
 

@@ -13,10 +13,11 @@ Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmg
 
 ### Using the page
 
-Open `https://YOUR-USER.github.io/personal-ps5-payloads-list/manage/`, paste a repository URL into **Add repository** and click **Check**. Then pick one of two write modes:
+1. Create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission.
+2. Open `https://YOUR-USER.github.io/personal-ps5-payloads-list/manage/`, paste the token into **GitHub token** and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
+3. Paste a repository URL into **Add repository**, click **Check**, then **Add**.
 
-- **Confirm on GitHub** (no setup): clicking **Add on GitHub** opens GitHub with the file already filled in. Click **Commit changes**, then **Refresh** on the page.
-- **Direct (token)**: create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission, then save it on the page. After that, **Add** and **Remove** write to the repository straight away. The token stays saved in your browser.
+Without a token, the page is read-only.
 
 ### Manually
 
