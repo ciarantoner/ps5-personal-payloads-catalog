@@ -143,7 +143,7 @@
   <div id="modeBanner" class="msg show info"></div>
 
   <section>
-    <h2>Repository URL</h2>
+    <h2>Payload repository URL</h2>
     <div class="row">
       <input id="catalogUrl" readonly aria-label="payloads.json URL">
       <button id="copyBtn">Copy</button>
@@ -168,7 +168,7 @@
       Every page under <span class="mono" id="originHint"></span> shares that storage, so keep the token's scope limited.
     </p>
     <details>
-      <summary>Target repository (auto-detected)</summary>
+      <summary>This GitHub repository (auto-detected)</summary>
       <div class="row">
         <input id="ownerInput" placeholder="owner" aria-label="Owner">
         <input id="repoNameInput" placeholder="ps5-personal-payloads-catalog" aria-label="Repository">
@@ -179,7 +179,7 @@
   </section>
 
   <section>
-    <h2>Add repositories</h2>
+    <h2>Add GitHub repositories</h2>
     <form id="checkForm">
       <textarea id="repoInput" spellcheck="false" aria-label="Repository URLs, one per line"
         placeholder="One repository per line, e.g.&#10;https://github.com/user/repository&#10;user/another-repository"></textarea>
@@ -193,7 +193,7 @@
   </section>
 
   <section>
-    <h2>Tracked repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="refreshBtn" class="ghost small" type="button">Refresh</button></h2>
+    <h2>Tracked GitHub repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="refreshBtn" class="ghost small" type="button">Refresh</button></h2>
     <ul id="repoList" class="repos"><li class="empty">Loading…</li></ul>
     <div id="listMsg" class="msg"></div>
   </section>
@@ -382,7 +382,7 @@
   async function refresh() {
     const listMsg = $('listMsg');
     if (!target.owner) {
-      $('repoList').innerHTML = '<li class="empty">Set the repository owner under "GitHub token → Target repository".</li>';
+      $('repoList').innerHTML = '<li class="empty">Set the repository owner under "GitHub token → This GitHub repository".</li>';
       return;
     }
     try {
