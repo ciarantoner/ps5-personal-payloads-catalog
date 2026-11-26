@@ -161,6 +161,7 @@
   .page-header button { margin-top: 6px; }
   .dot-ok { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; background: var(--ok); }
   button.token-btn { display: inline-flex; align-items: center; }
+  footer { color: var(--muted); font-size: .85rem; text-align: center; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -198,6 +199,7 @@
     </div>
   </section>
 
+  <footer id="pageFooter">Every change to the <span class="mono">repos/</span> folder triggers the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).</footer>
 </main>
 
 <dialog id="tokenDialog" class="modal wide" aria-labelledby="tokenTitle">
@@ -345,8 +347,7 @@
     const banner = $('modeBanner');
     if (hasToken()) {
       banner.className = 'msg show ok';
-      banner.innerHTML = `<b>Edit mode</b> — changes are written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using the token saved in this browser.<br>
-        Every change to the <span class="mono">repos/</span> folder triggers the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).`;
+      banner.innerHTML = `<b>Edit mode</b> — changes are written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using the token saved in this browser.`;
     } else {
       banner.className = 'msg show info';
       banner.innerHTML = `<b>Read-only mode.</b> To add or remove payloads, <a href="#" data-open-token>set your GitHub token</a>.
@@ -810,7 +811,9 @@
   function fitTracked() {
     const top = trackedCard.getBoundingClientRect().top + window.scrollY;
     const gap = parseFloat(getComputedStyle(document.querySelector('main')).paddingTop) || 32;
-    trackedCard.style.height = `${Math.max(320, window.innerHeight - top - gap)}px`;
+    const footer = $('pageFooter');
+    const footerSpace = footer.offsetHeight + parseFloat(getComputedStyle(footer).marginTop || 0);
+    trackedCard.style.height = `${Math.max(320, window.innerHeight - top - gap - footerSpace)}px`;
   }
   window.addEventListener('resize', fitTracked);
   // The banner, notices and URL card above it move the card up or down.
