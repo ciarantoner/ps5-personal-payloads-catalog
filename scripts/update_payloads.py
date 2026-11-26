@@ -51,7 +51,7 @@ def gh_get(path: str) -> dict:
     req = urllib.request.Request(API + path)
     req.add_header("Accept", "application/vnd.github+json")
     req.add_header("X-GitHub-Api-Version", "2022-11-28")
-    req.add_header("User-Agent", "ps5-personal-payloads-repository-updater")
+    req.add_header("User-Agent", "ps5-personal-payloads-catalog-updater")
     token = os.environ.get("GITHUB_TOKEN")
     if token:
         req.add_header("Authorization", f"Bearer {token}")

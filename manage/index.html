@@ -137,13 +137,13 @@
 <main>
   <header>
     <h1>PS5 Personal Payloads Repository</h1>
-    <p>Personal catalog for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
+    <p>Personal payload repository for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
   </header>
 
   <div id="modeBanner" class="msg show info"></div>
 
   <section>
-    <h2>Catalog URL</h2>
+    <h2>Repository URL</h2>
     <div class="row">
       <input id="catalogUrl" readonly aria-label="payloads.json URL">
       <button id="copyBtn">Copy</button>
@@ -171,7 +171,7 @@
       <summary>Target repository (auto-detected)</summary>
       <div class="row">
         <input id="ownerInput" placeholder="owner" aria-label="Owner">
-        <input id="repoNameInput" placeholder="ps5-personal-payloads-repository" aria-label="Repository">
+        <input id="repoNameInput" placeholder="ps5-personal-payloads-catalog" aria-label="Repository">
         <button id="saveTargetBtn" class="ghost">Apply</button>
       </div>
     </details>
@@ -228,7 +228,7 @@
     }
     return {
       owner: store.get(LS.owner) || owner,
-      repo: store.get(LS.repo) || repo || 'ps5-personal-payloads-repository',
+      repo: store.get(LS.repo) || repo || 'ps5-personal-payloads-catalog',
     };
   }
   let target = detectTarget();
@@ -636,7 +636,7 @@
 
   $('saveTargetBtn').addEventListener('click', () => {
     const owner = $('ownerInput').value.trim();
-    const repo = $('repoNameInput').value.trim() || 'ps5-personal-payloads-repository';
+    const repo = $('repoNameInput').value.trim() || 'ps5-personal-payloads-catalog';
     store.set(LS.owner, owner);
     store.set(LS.repo, repo);
     target = { owner, repo };
