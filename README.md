@@ -1,4 +1,4 @@
-# PS5 Personal Payloads Repository
+# PS5 Personal Payloads Catalog
 
 Your own **payload repository** for the **PS5 Payload Manager (`pldmgr`)**. In this README, "payload repository" always means the `payloads.json` file you add to the Payload Manager. "GitHub repository" always means a project on GitHub.
 
