@@ -1,4 +1,13 @@
 {
   "name": "Personal PS5 Payloads List",
-  "payloads": []
+  "payloads": [
+    {
+      "id": "porhe911-app-title",
+      "name": "App-Title",
+      "description": "Standalone PS5 ELF payload for game and application title IDs, configurable placement and colours, and a Media settings shortcut.",
+      "filename": "App_Title_v0.2.17.elf",
+      "version": "0.2.17",
+      "url": "https://github.com/porhe911/App-Title/releases/download/v0.2.17/App_Title_v0.2.17.elf"
+    }
+  ]
 }
