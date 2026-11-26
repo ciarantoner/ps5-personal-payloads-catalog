@@ -1,4 +1,13 @@
 {
   "name": "Personal Repository",
-  "payloads": []
+  "payloads": [
+    {
+      "id": "notmaj0r-prosperomgr",
+      "name": "ProsperoMgr",
+      "description": "All-In-One manager for your PS5!",
+      "filename": "ProsperoMgr.elf",
+      "version": "1.2.1",
+      "url": "https://github.com/notmaj0r/ProsperoMgr/releases/download/v1.2.1/ProsperoMgr.elf"
+    }
+  ]
 }
