@@ -27,20 +27,14 @@
     color: var(--text);
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 64px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 16px; }
 
-  /* Two columns: the right card is taken out of the flow, so the row height is set by the
-     left column alone and the tracked list scrolls inside that height. */
-  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; }
-  .col-left > section:last-child { margin-bottom: 0; }
-  .col-right { position: relative; min-height: 320px; }
-  .col-right > section { position: absolute; inset: 0; margin: 0; display: flex; flex-direction: column; }
-  .list-scroll { flex: 1; min-height: 0; overflow-y: auto; margin-right: -8px; padding-right: 8px; }
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: minmax(0, 1fr); }
-    .col-right { position: static; min-height: 0; }
-    .col-right > section { position: static; max-height: 70vh; }
-  }
+  /* One column: the URL card on top, the tracked card below it. The tracked card reaches down to
+     the bottom of the screen with the same gap as the top of the page (fitTracked()); past that,
+     only its list scrolls. */
+  #urlCard { margin-bottom: 20px; }
+  #trackedCard { margin: 0; display: flex; flex-direction: column; }
+  .list-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-right: -8px; padding-right: 8px; }
 
   /* Modal (replaces the browser's confirm(), which can be blocked) */
   dialog.modal {
@@ -49,7 +43,16 @@
     padding: 20px; width: min(420px, calc(100vw - 32px));
   }
   dialog.modal::backdrop { background: rgba(0, 0, 0, .6); }
+  dialog.modal { max-height: calc(100vh - 32px); overflow-y: auto; }
+  dialog.modal.wide { width: min(680px, calc(100vw - 32px)); }
+  /* Add modal: title, text field, Check and the footer stay put; only the results scroll. */
+  dialog.modal.wide[open] { display: flex; flex-direction: column; overflow: hidden; }
+  dialog.modal.wide > * { flex-shrink: 0; }
+  dialog.modal.wide > .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-right: -8px; padding-right: 8px; }
   dialog.modal h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  dialog.modal .modal-body:not(:empty) { margin-top: 16px; }
+  dialog.modal .msg { margin: 12px 0 0; }
+  dialog.modal .actions { margin-top: 16px; }
   dialog.modal p { margin: 0 0 18px; color: var(--muted); word-break: break-word; }
   dialog.modal .actions { display: flex; justify-content: flex-end; gap: 8px; }
   button.danger-solid { background: var(--err); }
@@ -65,6 +68,7 @@
   }
   section h2 { font-size: 1.05rem; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
   section h2 .spacer { flex: 1; }
+  section h2 { flex-wrap: wrap; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row > input { flex: 1 1 240px; min-width: 0; }
   input, textarea {
@@ -84,6 +88,8 @@
   ul.results li { padding: 10px 0; border-top: 1px solid var(--border); }
   ul.results li:first-child { border-top: 0; padding-top: 0; }
   li.removed .repo-info a { color: var(--muted); text-decoration: line-through; }
+  ul.results li.to-add { display: flex; align-items: center; gap: 12px; }
+  .badge.new { color: var(--accent); border-color: rgba(59, 130, 246, .5); }
   .badge.err { color: var(--err); border-color: rgba(239, 68, 68, .4); }
   input[readonly] { font-family: var(--mono); font-size: .9rem; }
   button {
@@ -114,19 +120,16 @@
 
   #modeBanner { margin: 0 0 20px; }
 
-  .preview {
-    margin-top: 14px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    display: none;
-  }
-  .preview.show { display: block; }
-  .preview h3 { margin: 0 0 4px; font-size: 1rem; }
-  .preview dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 10px 0 14px; font-size: .9rem; }
-  .preview dt { color: var(--muted); }
-  .preview dd { margin: 0; word-break: break-word; }
+  .notices { position: sticky; top: 12px; z-index: 10; }
+  .msg.show.closable { display: flex; align-items: flex-start; gap: 10px; }
+  .notices .msg.show { margin: 0 0 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+  .notices .msg.ok { background: linear-gradient(rgba(34, 197, 94, .14), rgba(34, 197, 94, .14)), var(--panel); }
+  .notices .msg.err { background: linear-gradient(rgba(239, 68, 68, .14), rgba(239, 68, 68, .14)), var(--panel); }
+  .notices .msg.info { background: linear-gradient(rgba(59, 130, 246, .14), rgba(59, 130, 246, .14)), var(--panel); }
+  .msg-body { flex: 1; min-width: 0; word-break: break-word; }
+  button.msg-close { background: transparent; color: var(--muted); padding: 0 4px; font-size: 1.2rem; line-height: 1; }
+  button.msg-close:hover { background: transparent; color: var(--text); }
+
   .mono { font-family: var(--mono); font-size: .88rem; }
   ul.repos { list-style: none; margin: 0; padding: 0; }
   ul.repos li {
@@ -146,31 +149,40 @@
   .badge.ok { color: var(--ok); border-color: rgba(34, 197, 94, .4); }
   .badge.warn { color: var(--warn); border-color: rgba(245, 158, 11, .4); }
   .empty { color: var(--muted); padding: 8px 0; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
-  .dot.on { background: var(--ok); }
   details summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-top: 12px; }
   details .row { margin-top: 10px; }
-  footer { color: var(--muted); font-size: .85rem; text-align: center; }
   @media (max-width: 520px) {
     main { padding-top: 20px; }
     section { padding: 16px; }
     ul.repos li { flex-wrap: wrap; }
     .row > button { width: 100%; }
   }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .page-header button { margin-top: 6px; }
+  .dot-ok { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; background: var(--ok); }
+  button.token-btn { display: inline-flex; align-items: center; }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>PS5 Personal Payloads Catalog</h1>
-    <p>Personal payload repository for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
+  <header class="page-header">
+    <div>
+      <h1>PS5 Personal Payloads Catalog</h1>
+      <p>Personal payload repository for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
+    </div>
+    <button id="openTokenBtn" class="small token-btn" type="button">Set GitHub token</button>
   </header>
 
   <div id="modeBanner" class="msg show info"></div>
 
-  <div class="layout">
-  <div class="col-left">
-  <section>
+  <!-- Every notice from the page shows up here, at the top. Sticky, so it stays visible while scrolling. -->
+  <div id="notices" class="notices" aria-live="polite">
+    <div id="tokenMsg" class="msg"></div>
+    <div id="addMsg" class="msg"></div>
+    <div id="listMsg" class="msg"></div>
+  </div>
+
+  <section id="urlCard">
     <h2>Payload repository URL</h2>
     <div class="row">
       <input id="catalogUrl" readonly aria-label="payloads.json URL">
@@ -179,61 +191,63 @@
     <p class="hint">Paste this URL into the PS5 Payload Manager. <a id="viewJson" target="_blank" rel="noopener">View payloads.json</a> · <a id="actionsLink" target="_blank" rel="noopener">View GitHub Actions</a></p>
   </section>
 
-  <section>
-    <h2 id="tokenSection"><span id="tokenDot" class="dot"></span> GitHub token</h2>
-    <div class="row">
-      <input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="Personal Access Token">
-      <button id="saveTokenBtn">Save</button>
-      <button id="clearTokenBtn" class="ghost">Remove</button>
-    </div>
-    <p class="hint">
-      <b>You only need to do this once per browser.</b> The token stays saved here until it expires or you click <b>Remove</b>.
-    </p>
-    <p class="hint">
-      Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-Grained Token</a>
-      with access to <b>only</b> this repository and the <b>Contents: Read and write</b> permission.
-      It is stored only in this browser's <span class="mono">localStorage</span> and sent only to the GitHub API.
-      Every page under <span class="mono" id="originHint"></span> shares that storage, so keep the token's scope limited.
-    </p>
-    <details>
-      <summary>This GitHub repository (auto-detected)</summary>
-      <div class="row">
-        <input id="ownerInput" placeholder="owner" aria-label="Owner">
-        <input id="repoNameInput" placeholder="ps5-personal-payloads-catalog" aria-label="Repository">
-        <button id="saveTargetBtn" class="ghost">Apply</button>
-      </div>
-    </details>
-    <div id="tokenMsg" class="msg"></div>
-  </section>
-
-  <section>
-    <h2>Add GitHub repositories</h2>
-    <form id="checkForm">
-      <textarea id="repoInput" spellcheck="false" aria-label="Repository URLs, one per line"
-        placeholder="One repository per line, e.g.&#10;https://github.com/user/repository&#10;user/another-repository"></textarea>
-      <div class="form-actions">
-        <button type="submit" id="checkBtn">Check</button>
-        <span class="hint">Ctrl+Enter to check.</span>
-      </div>
-    </form>
-    <div id="preview" class="preview"></div>
-    <div id="addMsg" class="msg"></div>
-  </section>
-  </div>
-
-  <div class="col-right">
-  <section>
-    <h2>Tracked GitHub repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="refreshBtn" class="ghost small" type="button">Refresh</button></h2>
+  <section id="trackedCard">
+    <h2>Tracked GitHub repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="refreshBtn" class="ghost small" type="button">Refresh</button><button id="openAddBtn" class="small" type="button">+ Add</button></h2>
     <div class="list-scroll">
       <ul id="repoList" class="repos"><li class="empty">Loading…</li></ul>
     </div>
-    <div id="listMsg" class="msg"></div>
   </section>
-  </div>
-  </div>
 
-  <footer>Every change to the <span class="mono">repos/</span> folder triggers the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).</footer>
 </main>
+
+<dialog id="tokenDialog" class="modal wide" aria-labelledby="tokenTitle">
+  <h3 id="tokenTitle">GitHub token</h3>
+  <div class="row">
+    <input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="Personal Access Token">
+    <button id="saveTokenBtn" type="button">Save</button>
+    <button id="clearTokenBtn" class="ghost" type="button">Remove</button>
+  </div>
+  <p class="hint">
+    <b>You only need to do this once per browser.</b> The token stays saved here until it expires or you click <b>Remove</b>.
+  </p>
+  <p class="hint">
+    Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-Grained Token</a>
+    with access to <b>only</b> this repository and the <b>Contents: Read and write</b> permission.
+    It is stored only in this browser's <span class="mono">localStorage</span> and sent only to the GitHub API.
+    Every page under <span class="mono" id="originHint"></span> shares that storage, so keep the token's scope limited.
+  </p>
+  <details id="targetDetails" hidden>
+    <summary>This GitHub repository</summary>
+    <p class="hint">Only needed outside GitHub Pages (local testing or a custom domain), where the page can't tell which GitHub repository it belongs to.</p>
+    <div class="row">
+      <input id="ownerInput" placeholder="owner" aria-label="Owner">
+      <input id="repoNameInput" placeholder="ps5-personal-payloads-catalog" aria-label="Repository">
+      <button id="saveTargetBtn" class="ghost" type="button">Apply</button>
+    </div>
+  </details>
+  <div id="tokenModalMsg" class="msg"></div>
+  <div class="actions">
+    <button type="button" class="ghost" id="closeTokenBtn">Close</button>
+  </div>
+</dialog>
+
+<dialog id="addDialog" class="modal wide" aria-labelledby="addTitle">
+  <h3 id="addTitle">Add GitHub repositories</h3>
+  <form id="checkForm">
+    <textarea id="repoInput" spellcheck="false" aria-label="GitHub repository URLs, one per line"
+      placeholder="One GitHub repository per line, e.g.&#10;https://github.com/user/repository&#10;user/another-repository"></textarea>
+    <div class="form-actions">
+      <button type="submit" id="checkBtn">Check</button>
+      <span class="hint">Ctrl+Enter to check.</span>
+    </div>
+  </form>
+  <div id="preview" class="modal-body"></div>
+  <div id="modalMsg" class="msg"></div>
+  <div class="actions">
+    <button type="button" class="ghost" id="closeAddBtn">Close</button>
+    <button type="button" id="addBtn" disabled>Add</button>
+  </div>
+</dialog>
 
 <dialog id="confirmDialog" class="modal" aria-labelledby="confirmTitle">
   <form method="dialog">
@@ -263,17 +277,20 @@
 
   // ---------- Target detection ----------
   // https://OWNER.github.io/REPO/manage/ -> OWNER/REPO, so every fork manages its own list.
+  // On GitHub Pages the address always wins, so a stale manual setting can never point the page
+  // at the wrong (e.g. renamed) repository. Anywhere else (local testing, custom domain) the
+  // owner/repo typed in "This GitHub repository" is used.
+  const onPages = location.hostname.endsWith('.github.io');
   function detectTarget() {
-    const host = location.hostname;
-    const segs = location.pathname.split('/').filter(Boolean);
-    let owner = '', repo = '';
-    if (host.endsWith('.github.io')) {
-      owner = host.replace(/\.github\.io$/, '');
-      repo = segs[0] && segs[0] !== 'manage' && !segs[0].includes('.') ? segs[0] : `${owner}.github.io`;
+    if (onPages) {
+      const owner = location.hostname.replace(/\.github\.io$/, '');
+      const first = location.pathname.split('/').filter(Boolean)[0];
+      const repo = first && first !== 'manage' && !first.includes('.') ? first : `${owner}.github.io`;
+      return { owner, repo };
     }
     return {
-      owner: store.get(LS.owner) || owner,
-      repo: store.get(LS.repo) || repo || 'ps5-personal-payloads-catalog',
+      owner: store.get(LS.owner),
+      repo: store.get(LS.repo) || 'ps5-personal-payloads-catalog',
     };
   }
   let target = detectTarget();
@@ -283,10 +300,15 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function showMsg(el, type, html) {
-    el.className = `msg show ${type}`;
-    el.innerHTML = html;
+    el.className = `msg show closable ${type}`;
+    el.innerHTML = `<div class="msg-body">${html}</div><button type="button" class="msg-close" aria-label="Dismiss">×</button>`;
   }
   const hideMsg = (el) => { el.className = 'msg'; el.innerHTML = ''; };
+
+  $('notices').addEventListener('click', (ev) => {
+    const close = ev.target.closest('.msg-close');
+    if (close) hideMsg(close.closest('.msg'));
+  });
 
   function parseRepo(text) {
     const m = String(text).trim().match(/^(?:https?:\/\/)?(?:www\.)?(?:github\.com\/)?([A-Za-z0-9][A-Za-z0-9-]{0,38})\/([A-Za-z0-9._-]+?)(?:\.git)?(?:[\/?#].*)?$/);
@@ -323,10 +345,11 @@
     const banner = $('modeBanner');
     if (hasToken()) {
       banner.className = 'msg show ok';
-      banner.innerHTML = `<b>Edit mode</b> — changes are written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using the token saved in this browser.`;
+      banner.innerHTML = `<b>Edit mode</b> — changes are written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span> using the token saved in this browser.<br>
+        Every change to the <span class="mono">repos/</span> folder triggers the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).`;
     } else {
       banner.className = 'msg show info';
-      banner.innerHTML = `<b>Read-only mode.</b> To add or remove payloads, <a href="#tokenSection">save your GitHub token</a> below.
+      banner.innerHTML = `<b>Read-only mode.</b> To add or remove payloads, <a href="#" data-open-token>set your GitHub token</a>.
         You only need to do it once in this browser.
         Not your repository? <a href="${esc(repoUrl())}/fork" target="_blank" rel="noopener">Fork it</a> and use your fork's page.`;
     }
@@ -427,7 +450,7 @@
   async function refresh() {
     const listMsg = $('listMsg');
     if (!target.owner) {
-      $('repoList').innerHTML = '<li class="empty">Set the repository owner under "GitHub token → This GitHub repository".</li>';
+      $('repoList').innerHTML = '<li class="empty">Set the repository owner under <a href="#" data-open-token>GitHub token → This GitHub repository</a>.</li>';
       return;
     }
     try {
@@ -445,6 +468,9 @@
   // ---------- Header / URLs ----------
   function renderTarget() {
     renderMode();
+    // Manual owner/repo only outside GitHub Pages; open it right away if nothing is set yet.
+    $('targetDetails').hidden = onPages;
+    if (!onPages && !target.owner) $('targetDetails').open = true;
     const base = target.owner
       ? (target.repo.toLowerCase() === `${target.owner}.github.io`.toLowerCase()
           ? `https://${target.owner}.github.io`
@@ -457,7 +483,9 @@
     $('ownerInput').value = target.owner;
     $('repoNameInput').value = target.repo;
     $('originHint').textContent = location.origin;
-    $('tokenDot').classList.toggle('on', hasToken());
+    $('openTokenBtn').innerHTML = hasToken() ? '<span class="dot-ok"></span>Token saved' : 'Set GitHub token';
+    $('openTokenBtn').className = hasToken() ? 'ghost small token-btn' : 'small token-btn';
+    $('clearTokenBtn').disabled = !hasToken();
     $('tokenInput').placeholder = hasToken() ? 'Token saved ✓ (paste another to replace)' : 'github_pat_…';
   }
 
@@ -470,7 +498,8 @@
   });
 
   // ---------- Check & add ----------
-  let pending = [];   // valid repositories not tracked yet: { owner, repo, key }
+  let lastResults = [];   // results of the last Check (shown in the Add modal)
+  let pending = [];       // checked, valid and not discarded: { owner, repo, key }
 
   async function mapLimit(items, limit, fn) {
     const out = new Array(items.length);
@@ -505,33 +534,65 @@
     }
   }
 
-  function renderResults(results) {
-    const items = results.map((x) => {
+  // ---------- Add modal ----------
+  const plural = (n) => `${n} ${n === 1 ? 'repository' : 'repositories'}`;
+
+  function syncPending() {
+    pending = lastResults.filter((x) => x.status === 'ok').map((x) => x.repoRef);
+  }
+
+  function updateAddButton() {
+    const n = pending.length;
+    const btn = $('addBtn');
+    btn.textContent = n ? `Add ${plural(n)}` : 'Add';
+    btn.disabled = !n || !hasToken();
+    if (n && !hasToken()) showMsg($('modalMsg'), 'info', 'Set your GitHub token first: <a href="#" data-open-token>open token settings</a>.');
+  }
+
+  function renderResults() {
+    const items = lastResults.map((x, i) => {
       if (x.status === 'invalid') {
         return `<li><span class="mono">${esc(x.label)}</span><span class="badge err">invalid URL</span></li>`;
       }
       if (x.status === 'err') {
         return `<li><b>${esc(x.label)}</b><span class="badge err">skipped</span><div class="repo-meta">${x.text}</div></li>`;
       }
-      const badge = x.status === 'dup'
-        ? '<span class="badge">already in the list</span>'
-        : `<span class="badge ok">v${esc(x.version)}</span>`;
-      return `<li><b>${esc(x.label)}</b>${badge}<div class="repo-meta"><span class="mono">${esc(x.asset)}</span>${x.description ? ' — ' + esc(x.description) : ''}</div></li>`;
+      if (x.status === 'dup') {
+        return `<li><b>${esc(x.label)}</b><span class="badge">already in the list</span></li>`;
+      }
+      return `<li class="to-add">
+        <div class="repo-info"><b>${esc(x.label)}</b><span class="badge new">to add · v${esc(x.version)}</span>
+          <div class="repo-meta">${esc(x.asset)}${x.description ? ' — ' + esc(x.description) : ''}</div></div>
+        <button class="ghost small" type="button" data-discard="${i}">Discard</button>
+      </li>`;
     }).join('');
-
-    let action;
-    if (!pending.length) {
-      action = '<p class="hint">Nothing new to add.</p>';
-    } else if (hasToken()) {
-      action = `<button id="addBtn">Add ${pending.length} ${pending.length === 1 ? 'repository' : 'repositories'}</button>`;
-    } else {
-      action = '<p class="hint"><a href="#tokenSection">Save your GitHub token</a> to add them.</p>';
-    }
-    $('preview').innerHTML = `<ul class="results">${items}</ul>${action}`;
-    $('preview').className = 'preview show';
-    const addBtn = $('addBtn');
-    if (addBtn) addBtn.addEventListener('click', addPending);
+    $('preview').innerHTML = items ? `<ul class="results">${items}</ul>` : '';
+    updateAddButton();
   }
+
+  $('preview').addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-discard]');
+    if (!btn) return;
+    lastResults.splice(Number(btn.dataset.discard), 1);
+    syncPending();
+    renderResults();
+  });
+
+  function resetAddModal() {
+    lastResults = [];
+    pending = [];
+    $('repoInput').value = '';
+    $('preview').innerHTML = '';
+    hideMsg($('modalMsg'));
+  }
+
+  $('openAddBtn').addEventListener('click', () => {
+    hideMsg($('modalMsg'));
+    updateAddButton();
+    $('addDialog').showModal();
+    $('repoInput').focus();
+  });
+  $('closeAddBtn').addEventListener('click', () => $('addDialog').close());
 
   $('repoInput').addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); $('checkForm').requestSubmit(); }
@@ -539,12 +600,13 @@
 
   $('checkForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    const msg = $('addMsg');
-    $('preview').className = 'preview';
+    const msg = $('modalMsg');
     hideMsg(msg);
+    lastResults = [];
     pending = [];
+    renderResults();
 
-    const lines = $('repoInput').value.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
+    const lines = $('repoInput').value.split(/[\r\n,]+/).map((l) => l.trim()).filter(Boolean);
     if (!lines.length) { showMsg(msg, 'err', 'Paste at least one repository URL.'); return; }
 
     // Parse and de-duplicate the input.
@@ -568,9 +630,10 @@
         if (x.status !== 'ok') continue;
         if (added.has(x.repoRef.key)) { x.status = 'dup'; continue; }
         added.add(x.repoRef.key);
-        pending.push(x.repoRef);
       }
-      renderResults(results);
+      lastResults = results;
+      syncPending();
+      renderResults();
     } finally {
       btn.disabled = false; btn.textContent = 'Check';
     }
@@ -602,7 +665,6 @@
   async function addPending() {
     if (!pending.length) return;
     const list = pending.slice();
-    const msg = $('addMsg');
     const btn = $('addBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     const names = list.map((p) => `${p.owner}/${p.repo}`);
@@ -614,14 +676,13 @@
         path: `${DIR}/${fileNameFor(p.owner, p.repo)}`,
         content: `https://github.com/${p.owner}/${p.repo}\n`,
       })), message);
-      $('preview').className = 'preview';
-      $('repoInput').value = '';
-      pending = [];
+      resetAddModal();
+      $('addDialog').close();
       await refresh();
-      showMsg(msg, 'ok', `Added <b>${list.length}</b> ${list.length === 1 ? 'repository' : 'repositories'}: ${names.map(esc).join(', ')}. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
+      showMsg($('addMsg'), 'ok', `Added <b>${list.length}</b> ${list.length === 1 ? 'repository' : 'repositories'}: ${names.map(esc).join(', ')}. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
     } catch (e) {
-      btn.disabled = false; btn.textContent = `Add ${list.length} ${list.length === 1 ? 'repository' : 'repositories'}`;
-      showMsg(msg, 'err', apiErrorText(e));
+      updateAddButton();
+      showMsg($('modalMsg'), 'err', apiErrorText(e));
     }
   }
 
@@ -641,10 +702,16 @@
     });
   }
 
-  // Clicking the dark backdrop cancels.
-  $('confirmDialog').addEventListener('click', (ev) => {
-    if (ev.target === ev.currentTarget) ev.currentTarget.close('cancel');
-  });
+  // Clicking the dark backdrop closes a modal.
+  for (const id of ['confirmDialog', 'addDialog', 'tokenDialog']) {
+    $(id).addEventListener('click', (ev) => {
+      const d = ev.currentTarget;
+      if (ev.target !== d) return;
+      const r = d.getBoundingClientRect();
+      const inside = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+      if (!inside) d.close('cancel');
+    });
+  }
 
   // ---------- Remove ----------
   $('repoList').addEventListener('click', async (ev) => {
@@ -677,22 +744,41 @@
     }
   });
 
-  // ---------- Token & target ----------
+  // ---------- Token modal ----------
+  function openTokenModal() {
+    if ($('addDialog').open) $('addDialog').close();
+    hideMsg($('tokenModalMsg'));
+    $('tokenDialog').showModal();
+    $('tokenInput').focus();
+  }
+  $('openTokenBtn').addEventListener('click', openTokenModal);
+  $('closeTokenBtn').addEventListener('click', () => $('tokenDialog').close());
+  document.addEventListener('click', (ev) => {
+    if (!ev.target.closest('[data-open-token]')) return;
+    ev.preventDefault();
+    openTokenModal();
+  });
+  $('tokenInput').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); $('saveTokenBtn').click(); }
+  });
+
   $('saveTokenBtn').addEventListener('click', async () => {
-    const msg = $('tokenMsg');
+    const msg = $('tokenModalMsg');
     const token = $('tokenInput').value.trim();
     if (!token) { showMsg(msg, 'err', 'Paste a token before saving.'); return; }
     store.set(LS.token, token);
     $('tokenInput').value = '';
     renderTarget();
     renderList();
+    updateAddButton();
     try {
       const repo = await gh(`/repos/${target.owner}/${target.repo}`);
       if (repo.permissions && repo.permissions.push === false) {
         showMsg(msg, 'err', `Token saved, but your account has no write access to <b>${esc(repo.full_name)}</b>. Fork it and use your fork's page.`);
-      } else {
-        showMsg(msg, 'ok', `Token saved, with access to <b>${esc(repo.full_name)}</b>. You won't be asked for it again in this browser.`);
+        return;
       }
+      $('tokenDialog').close();
+      showMsg($('tokenMsg'), 'ok', `Token saved, with access to <b>${esc(repo.full_name)}</b>. You won't be asked for it again in this browser.`);
     } catch (e) {
       showMsg(msg, 'err', `Token saved, but verification failed: ${apiErrorText(e)}`);
     }
@@ -702,7 +788,8 @@
     store.set(LS.token, '');
     renderTarget();
     renderList();
-    $('preview').className = 'preview';
+    updateAddButton();
+    $('tokenDialog').close();
     showMsg($('tokenMsg'), 'info', 'Token removed from this browser.');
   });
 
@@ -714,11 +801,27 @@
     target = { owner, repo };
     renderTarget();
     refresh();
-    showMsg($('tokenMsg'), 'info', `Using <b>${esc(owner)}/${esc(repo)}</b>.`);
+    showMsg($('tokenModalMsg'), 'info', `Using <b>${esc(owner)}/${esc(repo)}</b>.`);
   });
+
+  // ---------- Tracked card height ----------
+  // Reaches down to the bottom of the screen, leaving the same gap as the page has at the top.
+  const trackedCard = $('trackedCard');
+  function fitTracked() {
+    const top = trackedCard.getBoundingClientRect().top + window.scrollY;
+    const gap = parseFloat(getComputedStyle(document.querySelector('main')).paddingTop) || 32;
+    trackedCard.style.height = `${Math.max(320, window.innerHeight - top - gap)}px`;
+  }
+  window.addEventListener('resize', fitTracked);
+  // The banner, notices and URL card above it move the card up or down.
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(fitTracked);
+    for (const el of [$('modeBanner'), $('notices'), $('urlCard')]) ro.observe(el);
+  }
 
   renderTarget();
   refresh();
+  fitTracked();
 })();
 </script>
 </body>
