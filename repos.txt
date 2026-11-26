@@ -1,3 +1,0 @@
-# GitHub repositories to track (one per line).
-# Accepted formats: https://github.com/owner/repo  or  owner/repo
-# Lines starting with # are ignored.

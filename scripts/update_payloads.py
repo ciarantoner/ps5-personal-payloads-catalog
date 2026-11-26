@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build payloads.json (PS5 Payload Manager format) from repos.txt.
+"""Build payloads.json (PS5 Payload Manager format) from the repos/ folder.
 
-For each repository listed in repos.txt, query the GitHub API
+For each repository listed in repos/*.txt (one per line), query the GitHub API
 (/repos/{owner}/{repo} and /repos/{owner}/{repo}/releases/latest), take the
 first asset ending in .elf or .bin and build the catalog entry.
 
@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPOS_FILE = ROOT / "repos.txt"
+REPOS_DIR = ROOT / "repos"
 OUTPUT_FILE = ROOT / "payloads.json"
 CATALOG_NAME = "Personal PS5 Payloads List"
 API = "https://api.github.com"
@@ -105,15 +105,15 @@ def load_previous() -> dict[str, dict]:
 
 
 def main() -> int:
-    if not REPOS_FILE.exists():
-        print(f"::error::{REPOS_FILE.name} not found")
-        return 1
-
     previous = load_previous()
     payloads: list[dict] = []
     seen: set[str] = set()
 
-    for line in REPOS_FILE.read_text(encoding="utf-8").splitlines():
+    lines: list[str] = []
+    for f in sorted(REPOS_DIR.glob("*.txt"), key=lambda x: x.name.lower()):
+        lines += f.read_text(encoding="utf-8").splitlines()
+
+    for line in lines:
         parsed = parse_repo(line)
         if not parsed:
             continue

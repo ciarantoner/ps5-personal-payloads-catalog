@@ -1,6 +1,6 @@
 # Personal PS5 Payloads List
 
-Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmgr`)**. You list GitHub repositories in `repos.txt`, and a GitHub Action picks the `.elf`/`.bin` file from each one's latest release and rebuilds the catalog every 6 hours. The catalog is served through GitHub Pages.
+Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmgr`)**. You add GitHub repositories to the `repos/` folder, and a GitHub Action picks the `.elf`/`.bin` file from each one's latest release and rebuilds the catalog every 6 hours. The catalog is served through GitHub Pages.
 
 ## Setup
 
@@ -13,16 +13,14 @@ Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmg
 
 ### Using the page
 
-1. Create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission.
-2. Open `https://YOUR-USER.github.io/personal-ps5-payloads-list/`, paste the token into **GitHub token** and click **Save**.
-3. Paste a repository URL into **Add repository**, click **Check**, then click **Add to repos.txt**.
+Open `https://YOUR-USER.github.io/personal-ps5-payloads-list/manage/`, paste a repository URL into **Add repository** and click **Check**. Then pick one of two write modes:
 
-Visitors without a token can only view the page.
+- **Confirm on GitHub** (no setup): clicking **Add on GitHub** opens GitHub with the file already filled in. Click **Commit changes**, then **Refresh** on the page.
+- **Direct (token)**: create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission, then save it on the page. After that, **Add** and **Remove** write to the repository straight away. The token stays saved in your browser.
 
 ### Manually
 
-1. Edit `repos.txt` in your fork and add one repository per line (`https://github.com/owner/repo` or `owner/repo`).
-2. Commit to `main`. The Action runs automatically and updates `payloads.json`.
+Create a file in the `repos/` folder (for example `owner__repo.txt`) containing the repository URL, `https://github.com/owner/repo`. A single file can also list several repositories, one per line. Commit to `main` and the Action updates `payloads.json`.
 
 Either way, the new payload shows up in `payloads.json` within a few minutes. The repository needs a release with a `.elf` or `.bin` file.
 
