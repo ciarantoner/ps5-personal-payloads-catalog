@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PS5 Payloads List</title>
+<style>
+  :root {
+    --bg: #0d1017;
+    --panel: #151a23;
+    --panel-2: #1c2330;
+    --border: #2a3342;
+    --text: #e6e9ef;
+    --muted: #8b95a7;
+    --accent: #3b82f6;
+    --accent-2: #2563eb;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --radius: 10px;
+    --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  header p { margin: 0 0 24px; color: var(--muted); }
+  section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 { font-size: 1.05rem; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > input { flex: 1 1 240px; min-width: 0; }
+  input {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font: inherit;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  input[readonly] { font-family: var(--mono); font-size: .9rem; }
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--accent-2); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  button.ghost:hover { background: var(--panel-2); }
+  button.danger { background: transparent; border: 1px solid var(--border); color: var(--err); padding: 6px 12px; }
+  button.danger:hover { background: rgba(239, 68, 68, .1); border-color: var(--err); }
+  .hint { color: var(--muted); font-size: .85rem; margin: 8px 0 0; }
+  a { color: var(--accent); }
+  .msg { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: .9rem; display: none; }
+  .msg.show { display: block; }
+  #modeBanner { margin: 0 0 20px; }
+  .msg.ok { background: rgba(34, 197, 94, .1); border: 1px solid rgba(34, 197, 94, .35); }
+  .msg.err { background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .35); }
+  .msg.info { background: rgba(59, 130, 246, .1); border: 1px solid rgba(59, 130, 246, .35); }
+  .preview {
+    margin-top: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: none;
+  }
+  .preview.show { display: block; }
+  .preview h3 { margin: 0 0 4px; font-size: 1rem; }
+  .preview dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 10px 0 14px; font-size: .9rem; }
+  .preview dt { color: var(--muted); }
+  .preview dd { margin: 0; word-break: break-word; }
+  .mono { font-family: var(--mono); font-size: .88rem; }
+  ul.repos { list-style: none; margin: 0; padding: 0; }
+  ul.repos li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+  ul.repos li:first-child { border-top: 0; }
+  .repo-info { flex: 1; min-width: 0; }
+  .repo-info a { font-weight: 600; text-decoration: none; word-break: break-all; }
+  .repo-info a:hover { text-decoration: underline; }
+  .repo-meta { color: var(--muted); font-size: .85rem; word-break: break-word; }
+  .badge {
+    display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted); margin-left: 6px; vertical-align: middle;
+  }
+  .badge.ok { color: var(--ok); border-color: rgba(34, 197, 94, .4); }
+  .badge.warn { color: var(--warn); border-color: rgba(245, 158, 11, .4); }
+  .empty { color: var(--muted); padding: 8px 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .dot.on { background: var(--ok); }
+  details summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-top: 12px; }
+  details .row { margin-top: 10px; }
+  footer { color: var(--muted); font-size: .85rem; text-align: center; }
+  @media (max-width: 520px) {
+    main { padding-top: 20px; }
+    section { padding: 16px; }
+    ul.repos li { flex-wrap: wrap; }
+    button { width: 100%; }
+    ul.repos li button { width: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Personal PS5 Payloads List</h1>
+    <p>Personal catalog for the PS5 Payload Manager (<span class="mono">pldmgr</span>).</p>
+  </header>
+
+  <div id="modeBanner" class="msg show info"></div>
+
+  <section>
+    <h2>Catalog URL</h2>
+    <div class="row">
+      <input id="catalogUrl" readonly aria-label="payloads.json URL">
+      <button id="copyBtn">Copy</button>
+    </div>
+    <p class="hint">Paste this URL into the PS5 Payload Manager. <a id="viewJson" target="_blank" rel="noopener">View payloads.json</a> · <a id="actionsLink" target="_blank" rel="noopener">View GitHub Actions</a></p>
+  </section>
+
+  <section>
+    <h2>Add repository</h2>
+    <form id="checkForm" class="row">
+      <input id="repoInput" placeholder="https://github.com/user/repository" autocomplete="off" aria-label="Repository URL">
+      <button type="submit" id="checkBtn">Check</button>
+    </form>
+    <div id="preview" class="preview"></div>
+    <div id="addMsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2>Tracked repositories <span id="repoCount" class="badge">0</span></h2>
+    <ul id="repoList" class="repos"><li class="empty">Loading…</li></ul>
+    <div id="listMsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2><span id="tokenDot" class="dot"></span> GitHub token</h2>
+    <div class="row">
+      <input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="Personal Access Token">
+      <button id="saveTokenBtn">Save</button>
+      <button id="clearTokenBtn" class="ghost">Remove</button>
+    </div>
+    <p class="hint">
+      Use a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-Grained Token</a>
+      with access to <b>only</b> this repository and the <b>Contents: Read and write</b> permission.
+      It is stored only in this browser's <span class="mono">localStorage</span>.
+      Note: every page under <span class="mono" id="originHint"></span> shares the same localStorage, so keep the token's scope limited.
+    </p>
+    <details>
+      <summary>Target repository (auto-detected)</summary>
+      <div class="row">
+        <input id="ownerInput" placeholder="owner" aria-label="Owner">
+        <input id="repoNameInput" placeholder="personal-ps5-payloads-list" aria-label="Repository">
+        <button id="saveTargetBtn" class="ghost">Apply</button>
+      </div>
+    </details>
+    <div id="tokenMsg" class="msg"></div>
+  </section>
+
+  <footer>Changes to <span class="mono">repos.txt</span> trigger the Action that regenerates <span class="mono">payloads.json</span> (takes ~1–2 min plus the Pages deploy).</footer>
+</main>
+
+<script>
+(() => {
+  const API = 'https://api.github.com';
+  const FILE = 'repos.txt';
+  const BRANCH = 'main';
+  const LS = { token: 'ps5pl.token', owner: 'ps5pl.owner', repo: 'ps5pl.repo' };
+  const EXT = /\.(elf|bin)$/i;
+
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+    set(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} },
+  };
+
+  // ---------- Target detection ----------
+  // https://OWNER.github.io/REPO/ -> OWNER/REPO, so every fork manages its own list.
+  function detectTarget() {
+    const host = location.hostname;
+    const segs = location.pathname.split('/').filter(Boolean);
+    let owner = '', repo = '';
+    if (host.endsWith('.github.io')) {
+      owner = host.replace(/\.github\.io$/, '');
+      repo = segs[0] && !segs[0].includes('.') ? segs[0] : `${owner}.github.io`;
+    }
+    return {
+      owner: store.get(LS.owner) || owner,
+      repo: store.get(LS.repo) || repo || 'personal-ps5-payloads-list',
+    };
+  }
+  let target = detectTarget();
+
+  // ---------- Helpers ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function showMsg(el, type, html) {
+    el.className = `msg show ${type}`;
+    el.innerHTML = html;
+  }
+  const hideMsg = (el) => { el.className = 'msg'; el.innerHTML = ''; };
+
+  function parseRepo(text) {
+    const m = String(text).trim().match(/^(?:https?:\/\/)?(?:www\.)?(?:github\.com\/)?([A-Za-z0-9][A-Za-z0-9-]{0,38})\/([A-Za-z0-9._-]+?)(?:\.git)?(?:[\/?#].*)?$/);
+    return m ? { owner: m[1], repo: m[2], key: `${m[1]}/${m[2]}`.toLowerCase() } : null;
+  }
+
+  async function gh(path, opts = {}) {
+    const token = store.get(LS.token);
+    const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
+    if (token && opts.auth !== false) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(API + path, { ...opts, headers, cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch {}
+    if (!res.ok) {
+      const err = new Error((body && body.message) || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return body;
+  }
+
+  const b64decode = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
+  function b64encode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin);
+  }
+
+  function apiErrorText(e) {
+    if (e.status === 401) return 'Invalid or expired token.';
+    if (e.status === 403) return `Access denied (${esc(e.message)}). Make sure the token has Contents: Read and write on this repository, or the API rate limit may have been reached.`;
+    if (e.status === 404) return 'Not found. If the repository is private, the token needs access to it.';
+    if (e.status === 409) return 'Conflict: the file changed while saving. Please try again.';
+    return esc(e.message || String(e));
+  }
+
+  // ---------- Mode (read-only vs edit) ----------
+  const canEdit = () => !!store.get(LS.token);
+  const forkUrl = () => `https://github.com/${target.owner}/${target.repo}/fork`;
+
+  function renderMode() {
+    const banner = $('modeBanner');
+    if (canEdit()) {
+      banner.className = 'msg show ok';
+      banner.innerHTML = `<b>Edit mode</b> — changes will be written to <span class="mono">${esc(target.owner)}/${esc(target.repo)}</span>.`;
+    } else {
+      banner.className = 'msg show info';
+      banner.innerHTML = `<b>Read-only mode.</b> You can copy the catalog URL and browse the list.
+        If this repository is yours, save your token at the bottom of the page to edit it.
+        Want your own list? <a href="${esc(forkUrl())}" target="_blank" rel="noopener">Fork it</a> and follow the README.`;
+    }
+  }
+
+  // ---------- repos.txt state ----------
+  let file = { sha: null, lines: [] };
+  let catalog = {};
+
+  async function fetchReposFile() {
+    const data = await gh(`/repos/${target.owner}/${target.repo}/contents/${FILE}?ref=${BRANCH}`);
+    file = { sha: data.sha, lines: b64decode(data.content || '').split(/\r?\n/) };
+    return file;
+  }
+
+  function repoEntries() {
+    const seen = new Set();
+    const out = [];
+    for (const line of file.lines) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const p = parseRepo(t);
+      if (p && !seen.has(p.key)) { seen.add(p.key); out.push(p); }
+    }
+    return out;
+  }
+
+  async function writeReposFile(mutate, message) {
+    if (!canEdit()) throw Object.assign(new Error('Save your GitHub token first (see the "GitHub token" section).'), { status: 0 });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await fetchReposFile();
+      const newLines = mutate(file.lines.slice());
+      let content = newLines.join('\n').replace(/\n+$/, '');
+      content = content ? content + '\n' : '';
+      try {
+        const res = await gh(`/repos/${target.owner}/${target.repo}/contents/${FILE}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, content: b64encode(content), sha: file.sha, branch: BRANCH }),
+        });
+        file = { sha: res.content.sha, lines: content.split('\n') };
+        return;
+      } catch (e) {
+        if (e.status !== 409 || attempt === 1) throw e;
+      }
+    }
+  }
+
+  async function loadCatalog() {
+    try {
+      const res = await fetch(`payloads.json?t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      catalog = {};
+      for (const p of data.payloads || []) catalog[String(p.id).toLowerCase()] = p;
+    } catch { catalog = {}; }
+  }
+
+  function renderList() {
+    const list = $('repoList');
+    const entries = repoEntries();
+    $('repoCount').textContent = entries.length;
+    if (!entries.length) {
+      list.innerHTML = '<li class="empty">No repositories in repos.txt yet.</li>';
+      return;
+    }
+    list.innerHTML = entries.map((r) => {
+      const p = catalog[`${r.owner}-${r.repo}`.toLowerCase()];
+      const badge = p
+        ? `<span class="badge ok">v${esc(p.version)}</span>`
+        : '<span class="badge warn">pending</span>';
+      const meta = p
+        ? `${esc(p.filename)}${p.description ? ' — ' + esc(p.description) : ''}`
+        : 'Not in payloads.json yet (waiting for the Action, or no .elf/.bin release).';
+      return `<li>
+        <div class="repo-info">
+          <a href="https://github.com/${esc(r.owner)}/${esc(r.repo)}" target="_blank" rel="noopener">${esc(r.owner)}/${esc(r.repo)}</a>${badge}
+          <div class="repo-meta">${meta}</div>
+        </div>
+        ${canEdit() ? `<button class="danger" data-remove="${esc(r.key)}">Remove</button>` : ''}
+      </li>`;
+    }).join('');
+  }
+
+  async function refresh() {
+    const listMsg = $('listMsg');
+    if (!target.owner) {
+      $('repoList').innerHTML = '<li class="empty">Set the repository owner under "GitHub token → Target repository".</li>';
+      return;
+    }
+    try {
+      await Promise.all([fetchReposFile(), loadCatalog()]);
+      hideMsg(listMsg);
+      renderList();
+    } catch (e) {
+      $('repoList').innerHTML = '';
+      showMsg(listMsg, 'err', `Could not read ${FILE}: ${apiErrorText(e)}`);
+    }
+  }
+
+  // ---------- Header / URLs ----------
+  function renderTarget() {
+    renderMode();
+    const base = target.owner
+      ? (target.repo.toLowerCase() === `${target.owner}.github.io`.toLowerCase()
+          ? `https://${target.owner}.github.io`
+          : `https://${target.owner}.github.io/${target.repo}`)
+      : location.href.replace(/[^/]*$/, '').replace(/\/$/, '');
+    const url = `${base}/payloads.json`;
+    $('catalogUrl').value = url;
+    $('viewJson').href = url;
+    $('actionsLink').href = `https://github.com/${target.owner}/${target.repo}/actions`;
+    $('ownerInput').value = target.owner;
+    $('repoNameInput').value = target.repo;
+    $('originHint').textContent = location.origin;
+    $('tokenDot').classList.toggle('on', canEdit());
+    $('tokenInput').placeholder = canEdit() ? 'Token saved ✓ (paste another to replace)' : 'github_pat_…';
+  }
+
+  $('copyBtn').addEventListener('click', async () => {
+    const input = $('catalogUrl');
+    try { await navigator.clipboard.writeText(input.value); }
+    catch { input.select(); document.execCommand('copy'); }
+    $('copyBtn').textContent = 'Copied!';
+    setTimeout(() => { $('copyBtn').textContent = 'Copy'; }, 1500);
+  });
+
+  // ---------- Check & add ----------
+  let pending = null;
+
+  $('checkForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const preview = $('preview');
+    const msg = $('addMsg');
+    preview.className = 'preview';
+    hideMsg(msg);
+    pending = null;
+
+    const r = parseRepo($('repoInput').value);
+    if (!r) { showMsg(msg, 'err', 'Invalid URL. Use the format https://github.com/user/repository'); return; }
+
+    const btn = $('checkBtn');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    try {
+      const [info, release] = await Promise.all([
+        gh(`/repos/${r.owner}/${r.repo}`),
+        gh(`/repos/${r.owner}/${r.repo}/releases/latest`).catch((e) => { if (e.status === 404) return null; throw e; }),
+      ]);
+      if (!release) { showMsg(msg, 'err', `<b>${esc(info.full_name)}</b> has no published release.`); return; }
+      const asset = (release.assets || []).find((a) => EXT.test(a.name));
+      if (!asset) { showMsg(msg, 'err', `The latest release (<b>${esc(release.tag_name)}</b>) of <b>${esc(info.full_name)}</b> has no .elf or .bin file.`); return; }
+
+      const [fo, fr] = info.full_name.split('/');
+      const key = `${fo}/${fr}`.toLowerCase();
+      const already = repoEntries().some((e) => e.key === key);
+      pending = { owner: fo, repo: fr, key };
+
+      const version = String(release.tag_name || '').replace(/^[vV](?=\d)/, '');
+      preview.innerHTML = `
+        <h3>${esc(info.name || fr)}</h3>
+        <div class="repo-meta">${esc(info.full_name)}</div>
+        <dl>
+          <dt>Version</dt><dd>${esc(version)}</dd>
+          <dt>Description</dt><dd>${esc(info.description || '—')}</dd>
+          <dt>File</dt><dd class="mono">${esc(asset.name)} (${(asset.size / 1024).toFixed(1)} KB)</dd>
+          <dt>Published</dt><dd>${esc(new Date(release.published_at).toLocaleString())}</dd>
+        </dl>
+        ${already
+          ? '<span class="badge ok">Already in the list</span>'
+          : canEdit()
+            ? '<button id="addBtn">Add to repos.txt</button>'
+            : `<p class="hint">Valid payload. To add it, save your token (if this repository is yours) or <a href="${esc(forkUrl())}" target="_blank" rel="noopener">fork it</a> and use your fork's page.</p>`}`;
+      preview.className = 'preview show';
+      const addBtn = $('addBtn');
+      if (addBtn) addBtn.addEventListener('click', addPending);
+    } catch (e) {
+      showMsg(msg, 'err', apiErrorText(e));
+    } finally {
+      btn.disabled = false; btn.textContent = 'Check';
+    }
+  });
+
+  async function addPending() {
+    if (!pending) return;
+    const msg = $('addMsg');
+    const btn = $('addBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const p = pending;
+    try {
+      await writeReposFile((lines) => {
+        const exists = lines.some((l) => { const x = parseRepo(l); return x && !l.trim().startsWith('#') && x.key === p.key; });
+        if (!exists) {
+          while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+          lines.push(`https://github.com/${p.owner}/${p.repo}`);
+        }
+        return lines;
+      }, `Add ${p.owner}/${p.repo} to repos.txt`);
+      $('preview').className = 'preview';
+      $('repoInput').value = '';
+      pending = null;
+      renderList();
+      showMsg(msg, 'ok', `<b>${esc(p.owner)}/${esc(p.repo)}</b> added. The <a href="https://github.com/${esc(target.owner)}/${esc(target.repo)}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Add to repos.txt';
+      showMsg(msg, 'err', apiErrorText(e));
+    }
+  }
+
+  // ---------- Remove ----------
+  $('repoList').addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('button[data-remove]');
+    if (!btn) return;
+    const key = btn.dataset.remove;
+    if (!confirm(`Remove ${key} from the list?`)) return;
+    const msg = $('listMsg');
+    btn.disabled = true; btn.textContent = 'Removing…';
+    try {
+      await writeReposFile(
+        (lines) => lines.filter((l) => { const x = parseRepo(l); return l.trim().startsWith('#') || !x || x.key !== key; }),
+        `Remove ${key} from repos.txt`
+      );
+      renderList();
+      showMsg(msg, 'ok', `<b>${esc(key)}</b> removed. payloads.json will be regenerated by the Action.`);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Remove';
+      showMsg(msg, 'err', apiErrorText(e));
+    }
+  });
+
+  // ---------- Token & target ----------
+  $('saveTokenBtn').addEventListener('click', async () => {
+    const msg = $('tokenMsg');
+    const token = $('tokenInput').value.trim();
+    if (!token) { showMsg(msg, 'err', 'Paste a token before saving.'); return; }
+    store.set(LS.token, token);
+    $('tokenInput').value = '';
+    renderTarget();
+    try {
+      const repo = await gh(`/repos/${target.owner}/${target.repo}`);
+      if (repo.permissions && repo.permissions.push === false) {
+        showMsg(msg, 'err', `Token saved, but your account has no write access to <b>${esc(repo.full_name)}</b>. Fork it and use your fork's page.`);
+      } else {
+        showMsg(msg, 'ok', `Token saved, with access to <b>${esc(repo.full_name)}</b>.`);
+      }
+      refresh();
+    } catch (e) {
+      showMsg(msg, 'err', `Token saved, but verification failed: ${apiErrorText(e)}`);
+    }
+  });
+
+  $('clearTokenBtn').addEventListener('click', () => {
+    store.set(LS.token, '');
+    renderTarget();
+    renderList();
+    showMsg($('tokenMsg'), 'info', 'Token removed from this browser.');
+  });
+
+  $('saveTargetBtn').addEventListener('click', () => {
+    const owner = $('ownerInput').value.trim();
+    const repo = $('repoNameInput').value.trim() || 'personal-ps5-payloads-list';
+    store.set(LS.owner, owner);
+    store.set(LS.repo, repo);
+    target = { owner, repo };
+    renderTarget();
+    refresh();
+    showMsg($('tokenMsg'), 'info', `Using <b>${esc(owner)}/${esc(repo)}</b>.`);
+  });
+
+  renderTarget();
+  refresh();
+})();
+</script>
+</body>
+</html>
