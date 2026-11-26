@@ -25,7 +25,7 @@ Without a token, the page is read-only.
 
 Create a file in the `repos/` folder (for example `owner__repo.txt`) containing the repository URL, `https://github.com/owner/repo`. A single file can also list several repositories, one per line. Commit to `main` and the Action updates `payloads.json`.
 
-Either way, the new payload shows up in `payloads.json` within a few minutes. The repository needs a release with a `.elf` or `.bin` file.
+Either way, you never edit `payloads.json` yourself. It is filled in automatically with the added repository's information: name, description, file name, version and download link from its latest release. The new payload shows up within a few minutes. The repository needs a release with a `.elf` or `.bin` file.
 
 ## Using it in the PS5 Payload Manager
 
