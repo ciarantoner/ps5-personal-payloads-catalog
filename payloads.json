@@ -10,14 +10,6 @@
       "url": "https://github.com/StonedModder/Prospero-Menu/releases/download/v1.1.0/ProsperoMenu.elf"
     },
     {
-      "id": "tsuramatsu1-apr-emu-updater",
-      "name": "apr-emu-updater",
-      "description": "PS5 payload that keeps APR Emu up to date on installed titles, from a web interface on the console.",
-      "filename": "apr_emu_updater_v2.0.6.elf",
-      "version": "2.0.6",
-      "url": "https://github.com/tsuramatsu1/apr-emu-updater/releases/download/v2.0.6/apr_emu_updater_v2.0.6.elf"
-    },
-    {
       "id": "x1nons-prefbar",
       "name": "PrefBar",
       "description": "Standalone PS5 Performance Overlay",
