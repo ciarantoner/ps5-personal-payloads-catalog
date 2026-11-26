@@ -41,7 +41,7 @@
   section h2 .spacer { flex: 1; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row > input { flex: 1 1 240px; min-width: 0; }
-  input {
+  input, textarea {
     background: var(--panel-2);
     color: var(--text);
     border: 1px solid var(--border);
@@ -50,7 +50,14 @@
     font: inherit;
     outline: none;
   }
-  input:focus { border-color: var(--accent); }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { width: 100%; min-height: 110px; resize: vertical; font-family: var(--mono); font-size: .9rem; }
+  .form-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .form-actions .hint { margin: 0; }
+  ul.results { list-style: none; margin: 0 0 14px; padding: 0; }
+  ul.results li { padding: 10px 0; border-top: 1px solid var(--border); }
+  ul.results li:first-child { border-top: 0; padding-top: 0; }
+  .badge.err { color: var(--err); border-color: rgba(239, 68, 68, .4); }
   input[readonly] { font-family: var(--mono); font-size: .9rem; }
   button {
     background: var(--accent);
@@ -171,10 +178,14 @@
   </section>
 
   <section>
-    <h2>Add repository</h2>
-    <form id="checkForm" class="row">
-      <input id="repoInput" placeholder="https://github.com/user/repository" autocomplete="off" aria-label="Repository URL">
-      <button type="submit" id="checkBtn">Check</button>
+    <h2>Add repositories</h2>
+    <form id="checkForm">
+      <textarea id="repoInput" spellcheck="false" aria-label="Repository URLs, one per line"
+        placeholder="One repository per line, e.g.&#10;https://github.com/user/repository&#10;user/another-repository"></textarea>
+      <div class="form-actions">
+        <button type="submit" id="checkBtn">Check</button>
+        <span class="hint">Ctrl+Enter to check.</span>
+      </div>
     </form>
     <div id="preview" class="preview"></div>
     <div id="addMsg" class="msg"></div>
@@ -249,13 +260,6 @@
       throw err;
     }
     return body;
-  }
-
-  function b64encode(str) {
-    const bytes = new TextEncoder().encode(str);
-    let bin = '';
-    bytes.forEach((b) => { bin += String.fromCharCode(b); });
-    return btoa(bin);
   }
 
   function apiErrorText(e) {
@@ -392,83 +396,158 @@
   });
 
   // ---------- Check & add ----------
-  let pending = null;
+  let pending = [];   // valid repositories not tracked yet: { owner, repo, key }
 
-  $('checkForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const preview = $('preview');
-    const msg = $('addMsg');
-    preview.className = 'preview';
-    hideMsg(msg);
-    pending = null;
+  async function mapLimit(items, limit, fn) {
+    const out = new Array(items.length);
+    let next = 0;
+    const worker = async () => { while (next < items.length) { const i = next++; out[i] = await fn(items[i]); } };
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+    return out;
+  }
 
-    const r = parseRepo($('repoInput').value);
-    if (!r) { showMsg(msg, 'err', 'Invalid URL. Use the format https://github.com/user/repository'); return; }
-
-    const btn = $('checkBtn');
-    btn.disabled = true; btn.textContent = 'Checking…';
+  async function checkRepo(r) {
+    const label = `${r.owner}/${r.repo}`;
     try {
       const [info, release] = await Promise.all([
         gh(`/repos/${r.owner}/${r.repo}`),
         gh(`/repos/${r.owner}/${r.repo}/releases/latest`).catch((e) => { if (e.status === 404) return null; throw e; }),
       ]);
-      if (!release) { showMsg(msg, 'err', `<b>${esc(info.full_name)}</b> has no published release.`); return; }
+      if (!release) return { label: info.full_name, status: 'err', text: 'No published release.' };
       const asset = (release.assets || []).find((a) => EXT.test(a.name));
-      if (!asset) { showMsg(msg, 'err', `The latest release (<b>${esc(release.tag_name)}</b>) of <b>${esc(info.full_name)}</b> has no .elf or .bin file.`); return; }
-
-      const [fo, fr] = info.full_name.split('/');
-      const key = `${fo}/${fr}`.toLowerCase();
-      const already = files.some((f) => f.key === key);
-      pending = { owner: fo, repo: fr, key };
-
-      const version = String(release.tag_name || '').replace(/^[vV](?=\d)/, '');
-      preview.innerHTML = `
-        <h3>${esc(info.name || fr)}</h3>
-        <div class="repo-meta">${esc(info.full_name)}</div>
-        <dl>
-          <dt>Version</dt><dd>${esc(version)}</dd>
-          <dt>Description</dt><dd>${esc(info.description || '—')}</dd>
-          <dt>File</dt><dd class="mono">${esc(asset.name)} (${(asset.size / 1024).toFixed(1)} KB)</dd>
-          <dt>Published</dt><dd>${esc(new Date(release.published_at).toLocaleString())}</dd>
-        </dl>
-        ${already
-          ? '<span class="badge ok">Already in the list</span>'
-          : hasToken()
-            ? '<button id="addBtn">Add</button>'
-            : '<p class="hint">Valid payload. <a href="#tokenSection">Save your GitHub token</a> to add it.</p>'}`;
-      preview.className = 'preview show';
-      const addBtn = $('addBtn');
-      if (addBtn) addBtn.addEventListener('click', addPending);
+      if (!asset) return { label: info.full_name, status: 'err', text: `Latest release (${esc(release.tag_name)}) has no .elf or .bin file.` };
+      const [owner, repo] = info.full_name.split('/');
+      const key = `${owner}/${repo}`.toLowerCase();
+      return {
+        label: info.full_name,
+        status: files.some((f) => f.key === key) ? 'dup' : 'ok',
+        repoRef: { owner, repo, key },
+        version: String(release.tag_name || '').replace(/^[vV](?=\d)/, ''),
+        asset: asset.name,
+        description: info.description || '',
+      };
     } catch (e) {
-      showMsg(msg, 'err', apiErrorText(e));
+      return { label, status: 'err', text: e.status === 404 ? 'Repository not found.' : apiErrorText(e) };
+    }
+  }
+
+  function renderResults(results) {
+    const items = results.map((x) => {
+      if (x.status === 'invalid') {
+        return `<li><span class="mono">${esc(x.label)}</span><span class="badge err">invalid URL</span></li>`;
+      }
+      if (x.status === 'err') {
+        return `<li><b>${esc(x.label)}</b><span class="badge err">skipped</span><div class="repo-meta">${x.text}</div></li>`;
+      }
+      const badge = x.status === 'dup'
+        ? '<span class="badge">already in the list</span>'
+        : `<span class="badge ok">v${esc(x.version)}</span>`;
+      return `<li><b>${esc(x.label)}</b>${badge}<div class="repo-meta"><span class="mono">${esc(x.asset)}</span>${x.description ? ' — ' + esc(x.description) : ''}</div></li>`;
+    }).join('');
+
+    let action;
+    if (!pending.length) {
+      action = '<p class="hint">Nothing new to add.</p>';
+    } else if (hasToken()) {
+      action = `<button id="addBtn">Add ${pending.length} ${pending.length === 1 ? 'repository' : 'repositories'}</button>`;
+    } else {
+      action = '<p class="hint"><a href="#tokenSection">Save your GitHub token</a> to add them.</p>';
+    }
+    $('preview').innerHTML = `<ul class="results">${items}</ul>${action}`;
+    $('preview').className = 'preview show';
+    const addBtn = $('addBtn');
+    if (addBtn) addBtn.addEventListener('click', addPending);
+  }
+
+  $('repoInput').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); $('checkForm').requestSubmit(); }
+  });
+
+  $('checkForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const msg = $('addMsg');
+    $('preview').className = 'preview';
+    hideMsg(msg);
+    pending = [];
+
+    const lines = $('repoInput').value.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) { showMsg(msg, 'err', 'Paste at least one repository URL.'); return; }
+
+    // Parse and de-duplicate the input.
+    const seen = new Set();
+    const tasks = [];
+    for (const line of lines) {
+      const r = parseRepo(line);
+      if (!r) { tasks.push({ invalid: line }); continue; }
+      if (seen.has(r.key)) continue;
+      seen.add(r.key);
+      tasks.push(r);
+    }
+
+    const btn = $('checkBtn');
+    btn.disabled = true; btn.textContent = `Checking ${tasks.length}…`;
+    try {
+      const results = await mapLimit(tasks, 4, (t) => (t.invalid ? { label: t.invalid, status: 'invalid' } : checkRepo(t)));
+      // A repo may resolve to the same full_name through different spellings; keep the first.
+      const added = new Set();
+      for (const x of results) {
+        if (x.status !== 'ok') continue;
+        if (added.has(x.repoRef.key)) { x.status = 'dup'; continue; }
+        added.add(x.repoRef.key);
+        pending.push(x.repoRef);
+      }
+      renderResults(results);
     } finally {
       btn.disabled = false; btn.textContent = 'Check';
     }
   });
 
-  async function addPending() {
-    if (!pending) return;
-    const p = pending;
-    const msg = $('addMsg');
-    const name = fileNameFor(p.owner, p.repo);
-    const content = `https://github.com/${p.owner}/${p.repo}\n`;
+  // Writes all files in a single commit through the Git Data API.
+  async function commitFiles(entries, message) {
+    const base = `/repos/${target.owner}/${target.repo}/git`;
+    const post = (path, body, method = 'POST') => gh(base + path, {
+      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const ref = await gh(`${base}/ref/heads/${BRANCH}`);
+      const parent = await gh(`${base}/commits/${ref.object.sha}`);
+      const tree = await post('/trees', {
+        base_tree: parent.tree.sha,
+        tree: entries.map((e) => ({ path: e.path, mode: '100644', type: 'blob', content: e.content })),
+      });
+      const commit = await post('/commits', { message, tree: tree.sha, parents: [ref.object.sha] });
+      try {
+        await post(`/refs/heads/${BRANCH}`, { sha: commit.sha }, 'PATCH');
+        return;
+      } catch (e) {
+        if (e.status !== 422 || attempt === 1) throw e;   // branch moved meanwhile: retry once
+      }
+    }
+  }
 
+  async function addPending() {
+    if (!pending.length) return;
+    const list = pending.slice();
+    const msg = $('addMsg');
     const btn = $('addBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
+    const names = list.map((p) => `${p.owner}/${p.repo}`);
+    const message = list.length === 1
+      ? `Add ${names[0]}`
+      : `Add ${list.length} repositories\n\n${names.map((n) => `- ${n}`).join('\n')}`;
     try {
-      await gh(`/repos/${target.owner}/${target.repo}/contents/${DIR}/${encodeURIComponent(name)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Add ${p.owner}/${p.repo}`, content: b64encode(content), branch: BRANCH }),
-      });
+      await commitFiles(list.map((p) => ({
+        path: `${DIR}/${fileNameFor(p.owner, p.repo)}`,
+        content: `https://github.com/${p.owner}/${p.repo}\n`,
+      })), message);
       $('preview').className = 'preview';
       $('repoInput').value = '';
-      pending = null;
+      pending = [];
       await refresh();
-      showMsg(msg, 'ok', `<b>${esc(p.owner)}/${esc(p.repo)}</b> added. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
+      showMsg(msg, 'ok', `Added <b>${list.length}</b> ${list.length === 1 ? 'repository' : 'repositories'}: ${names.map(esc).join(', ')}. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
     } catch (e) {
-      btn.disabled = false; btn.textContent = 'Add';
-      showMsg(msg, 'err', e.status === 422 ? 'This repository is already in the list. Click Refresh.' : apiErrorText(e));
+      btn.disabled = false; btn.textContent = `Add ${list.length} ${list.length === 1 ? 'repository' : 'repositories'}`;
+      showMsg(msg, 'err', apiErrorText(e));
     }
   }
 
