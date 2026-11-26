@@ -57,6 +57,7 @@
   ul.results { list-style: none; margin: 0 0 14px; padding: 0; }
   ul.results li { padding: 10px 0; border-top: 1px solid var(--border); }
   ul.results li:first-child { border-top: 0; padding-top: 0; }
+  li.removed .repo-info a { color: var(--muted); text-decoration: line-through; }
   .badge.err { color: var(--err); border-color: rgba(239, 68, 68, .4); }
   input[readonly] { font-family: var(--mono); font-size: .9rem; }
   button {
@@ -308,9 +309,22 @@
           name: f.name, path: f.path, sha: f.sha,
           owner: m ? m[1] : null, repo: m ? m[2] : null,
           key: m ? `${m[1]}/${m[2]}`.toLowerCase() : null,
+          ids: m ? [`${m[1]}-${m[2]}`.toLowerCase()] : [],
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+    // Manual files can list several repositories: read them so their payloads aren't shown as removed.
+    await Promise.all(files.filter((f) => !f.key).map(async (f) => {
+      try {
+        const c = await gh(`/repos/${target.owner}/${target.repo}/contents/${f.path.split('/').map(encodeURIComponent).join('/')}?ref=${BRANCH}`);
+        const text = new TextDecoder().decode(Uint8Array.from(atob((c.content || '').replace(/\s/g, '')), (ch) => ch.charCodeAt(0)));
+        f.ids = text.split(/\r?\n/)
+          .filter((l) => l.trim() && !l.trim().startsWith('#'))
+          .map(parseRepo).filter(Boolean)
+          .map((r) => `${r.owner}-${r.repo}`.toLowerCase());
+      } catch { f.ids = null; }   // unknown contents
+    }));
   }
 
   async function loadCatalog() {
@@ -325,11 +339,26 @@
   function renderList() {
     const list = $('repoList');
     $('repoCount').textContent = files.length;
-    if (!files.length) {
+
+    // Payloads still in payloads.json whose repository is no longer in repos/: removal is pending.
+    const tracked = new Set(files.flatMap((f) => f.ids || []));
+    const unknownFiles = files.some((f) => f.ids === null);
+    const removed = unknownFiles ? [] : Object.entries(catalog).filter(([id]) => !tracked.has(id)).map(([, p]) => p);
+
+    if (!files.length && !removed.length) {
       list.innerHTML = '<li class="empty">No repositories tracked yet.</li>';
       return;
     }
-    list.innerHTML = files.map((f, i) => {
+    const removedHtml = removed.map((p) => {
+      const m = String(p.url || '').match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\//);
+      const name = m ? `${m[1]}/${m[2]}` : (p.name || p.id);
+      const href = m ? `https://github.com/${m[1]}/${m[2]}` : '#';
+      return `<li class="removed">
+        <div class="repo-info"><a href="${esc(href)}" target="_blank" rel="noopener">${esc(name)}</a><span class="badge warn">pending removal</span>
+          <div class="repo-meta">Removed from the list. It disappears from payloads.json on the next Action run.</div></div>
+      </li>`;
+    }).join('');
+    list.innerHTML = removedHtml + files.map((f, i) => {
       let title, badge, meta;
       if (f.key) {
         const p = catalog[`${f.owner}-${f.repo}`.toLowerCase()];
