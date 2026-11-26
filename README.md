@@ -2,7 +2,7 @@
 
 Your own payload catalog (`payloads.json`) for the **PS5 Payload Manager (`pldmgr`)**. You add GitHub repositories to the `repos/` folder, and a GitHub Action picks the `.elf`/`.bin` file from each one's latest release and rebuilds the catalog every 6 hours. The catalog is served through GitHub Pages.
 
-Because the catalog always points to the latest release of each repository, ProsperoMgr can update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
+Because the catalog always points to the latest release of each repository, the PS5 Payload Manager can update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
 
 ## Setup
 
@@ -35,4 +35,4 @@ In the Payload Manager, add this URL as a catalog source:
 https://YOUR-USER.github.io/ps5-personal-payloads-repository/payloads.json
 ```
 
-The page also shows this URL with a **Copy** button. Whenever a tracked repository publishes a new release, the catalog is updated automatically within 6 hours, and ProsperoMgr will offer the new version.
+The page also shows this URL with a **Copy** button. Whenever a tracked repository publishes a new release, the catalog is updated automatically within 6 hours, and the Payload Manager will offer the new version.
