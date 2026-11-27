@@ -4,7 +4,7 @@
 
 Your own **payload repository** for the **PS5 Payload Manager (`pldmgr`)**. In this README, "payload repository" always means the `payloads.json` file you add to the Payload Manager. "GitHub repository" always means a project on GitHub.
 
-You choose which GitHub repositories to track, and a GitHub Action keeps `payloads.json` pointing to the latest `.elf`/`.bin` release of each one. The PS5 Payload Manager can then update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
+You choose which GitHub repositories to track, and a GitHub Action keeps `payloads.json` pointing to the latest `.elf`/`.bin` release of each one. The PS5 Payload Manager then shows the new versions, so you can update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
 
 ## Quick start
 
@@ -17,7 +17,7 @@ You choose which GitHub repositories to track, and a GitHub Action keeps `payloa
 7. Remove the example payloads you don't want, then click **+ Add** to [add yours](#adding-payloads).
 8. [Add your payload repository URL to the PS5 Payload Manager](#using-it-in-the-ps5-payload-manager).
 
-That's it. From now on your payloads stay up to date on their own.
+That's it. New releases now show up in the Payload Manager on their own.
 
 ## How it works
 
