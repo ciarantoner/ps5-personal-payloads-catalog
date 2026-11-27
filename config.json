@@ -1,5 +1,5 @@
 {
-  "source": "upstream",
+  "source": "local",
   "upstream": "rfarkv/ps5-personal-payloads-catalog",
   "version": "v1"
 }
