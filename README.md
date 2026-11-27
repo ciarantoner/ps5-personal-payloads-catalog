@@ -18,8 +18,8 @@ Because the payload repository always points to the latest release of each track
 ### Using the page
 
 1. Create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission.
-2. Open `https://YOUR-USER.github.io/ps5-personal-payloads-catalog/manage/`, paste the token into **GitHub token** and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
-3. Paste one or more GitHub repository URLs (one per line) into **Add GitHub repositories**, click **Check**, then **Add**. All of them are saved in a single commit.
+2. Open `https://YOUR-USER.github.io/ps5-personal-payloads-catalog/manage/`, click **Set GitHub token**, paste the token and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
+3. Click **+ Add**, paste one or more GitHub repository URLs (one per line), click **Check**, then **Add**. All of them are saved in a single commit.
 
 Without a token, the page is read-only.
 
@@ -38,3 +38,18 @@ https://YOUR-USER.github.io/ps5-personal-payloads-catalog/payloads.json
 ```
 
 The page also shows this URL with a **Copy** button. Whenever a tracked GitHub repository publishes a new release, the payload repository is updated automatically within 6 hours, and the Payload Manager will offer the new version.
+
+## Updates to the page and the Action
+
+`config.json` in your fork sets where the management page and the Action get their code from:
+
+```json
+{ "source": "upstream" }
+```
+
+- **`upstream`** (default, recommended): uses the released version from [rfarkv/ps5-personal-payloads-catalog](https://github.com/rfarkv/ps5-personal-payloads-catalog), so your fork gets improvements without syncing.
+- **`local`**: uses only the code in your fork. Everything is static and self-contained; to get improvements, use **Sync fork** on GitHub.
+
+Either way, everything runs in your own browser and your own GitHub repository. With `upstream`, only the code is loaded from there: your token, your list and your commits never go to that GitHub repository.
+
+To switch, open the management page, click **Set GitHub token** (or **Token saved**) and choose under **Code source**, or edit `config.json` directly. It takes effect after the next Pages deploy (about a minute).

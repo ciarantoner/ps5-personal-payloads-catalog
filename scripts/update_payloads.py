@@ -18,7 +18,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+# CATALOG_ROOT lets the Action run a copy of this script fetched from the upstream repository.
+ROOT = Path(os.environ.get("CATALOG_ROOT") or Path(__file__).resolve().parent.parent)
 REPOS_DIR = ROOT / "repos"
 OUTPUT_FILE = ROOT / "payloads.json"
 CATALOG_NAME = "Personal Repository"

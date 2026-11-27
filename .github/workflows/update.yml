@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'repos/**'
+      - config.json
       - scripts/update_payloads.py
       - .github/workflows/update.yml
   schedule:
@@ -32,10 +33,42 @@ jobs:
         with:
           python-version: '3.12'
 
+      # config.json decides which script runs: "upstream" downloads the released version (git tag)
+      # from the original repository, "local" uses this repository's own copy. The upstream
+      # repository itself always uses its own copy. Only the script is downloaded; it runs here.
+      - name: Pick the script (config.json)
+        id: script
+        run: |
+          read -r SOURCE UPSTREAM VERSION < <(python - <<'PY'
+          import json
+          cfg = {"source": "upstream", "upstream": "rfarkv/ps5-personal-payloads-catalog", "version": "v1"}
+          try:
+              cfg.update(json.load(open("config.json", encoding="utf-8")))
+          except FileNotFoundError:
+              pass
+          print(cfg["source"], cfg["upstream"], cfg["version"])
+          PY
+          )
+          VERSION="${VERSION//$'\r'/}"
+          SCRIPT=scripts/update_payloads.py
+          if [ "$SOURCE" = "upstream" ] && [ "${GITHUB_REPOSITORY,,}" != "${UPSTREAM,,}" ]; then
+            URL="https://raw.githubusercontent.com/$UPSTREAM/$VERSION/scripts/update_payloads.py"
+            if curl -fsSL "$URL" -o "$RUNNER_TEMP/update_payloads.py"; then
+              SCRIPT="$RUNNER_TEMP/update_payloads.py"
+              echo "Using the upstream script: $UPSTREAM@$VERSION"
+            else
+              echo "::warning::Could not download $URL, using this repository's script"
+            fi
+          else
+            echo "Using this repository's script"
+          fi
+          echo "path=$SCRIPT" >> "$GITHUB_OUTPUT"
+
       - name: Build payloads.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/update_payloads.py
+          CATALOG_ROOT: ${{ github.workspace }}
+        run: python "${{ steps.script.outputs.path }}"
 
       - name: Commit and push (if changed)
         run: |
