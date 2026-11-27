@@ -2,14 +2,6 @@
   "name": "Personal Repository",
   "payloads": [
     {
-      "id": "hsgod-ps5-fpsunlocker-gta6",
-      "name": "ps5-fpsunlocker-gta6",
-      "description": "Unlock FPS on Grand Theft Auto VI for jailbroken PS5",
-      "filename": "GTAVI.UnlockFPS_v1.15.elf",
-      "version": "1.15",
-      "url": "https://github.com/HSgod/ps5-fpsunlocker-gta6/releases/download/v1.15/GTAVI.UnlockFPS_v1.15.elf"
-    },
-    {
       "id": "knutwurst-ps5-patchdl",
       "name": "ps5-patchdl",
       "description": "Official updates for your PS5 and PS4 games, from any browser. PatchDL runs on the PS5, finds the newest update for every installed game, downloads it with parallel connections and resume, and installs it on the console. Web UI for phone, laptop and TV, plus a home-screen tile. Runs on firmware 1.00 to 13.60.",
