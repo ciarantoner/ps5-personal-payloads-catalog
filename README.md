@@ -2,34 +2,42 @@
 
 Your own **payload repository** for the **PS5 Payload Manager (`pldmgr`)**. In this README, "payload repository" always means the `payloads.json` file you add to the Payload Manager. "GitHub repository" always means a project on GitHub.
 
-You choose which GitHub repositories to track by listing them in the `repos/` folder. A GitHub Action picks the `.elf`/`.bin` file from each GitHub repository's latest release and rebuilds the payload repository every 6 hours. It is served through GitHub Pages.
+You choose which GitHub repositories to track, and a GitHub Action keeps `payloads.json` pointing to the latest `.elf`/`.bin` release of each one. The PS5 Payload Manager can then update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
 
-Because the payload repository always points to the latest release of each tracked GitHub repository, the PS5 Payload Manager can update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
-
-## Setup
+## Quick start
 
 1. **Fork** this GitHub repository.
-2. In your fork, open the **Actions** tab and enable workflows.
-3. **Settings → Actions → General → Workflow permissions**: select **Read and write permissions**.
-4. **Settings → Pages**: choose **Deploy from a branch**, `main`, `/ (root)`.
+2. In your fork, open the **Actions** tab and click the button to enable workflows.
+3. Go to **Settings → Actions → General**, and under **Workflow permissions** select **Read and write permissions**. Save.
+4. Go to **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`. Save and wait about a minute.
+5. Create a [GitHub token](#github-token) with access to only your fork.
+6. Open `https://YOUR-USER.github.io/ps5-personal-payloads-catalog/manage/`, click **Set GitHub token**, paste it and click **Save**. Leave **Code source** on **Upstream** ([what's the difference?](#code-source-upstream-or-local)).
+7. Remove the example payloads you don't want, then click **+ Add** to [add yours](#adding-payloads).
+8. [Add your payload repository URL to the PS5 Payload Manager](#using-it-in-the-ps5-payload-manager).
 
-Your fork starts with the original list of tracked GitHub repositories. Remove the ones you don't want from the management page.
+That's it. From now on your payloads stay up to date on their own.
+
+## How it works
+
+- `repos/` lists the GitHub repositories you track, one file per GitHub repository.
+- Every 6 hours, and whenever `repos/` changes, a GitHub Action checks the latest release of each one, takes its `.elf` or `.bin` file and rebuilds `payloads.json`.
+- GitHub Pages serves `payloads.json` and the management page.
+
+You never edit `payloads.json` yourself. It is filled in automatically with each GitHub repository's information: name, description, file name, version and download link from its latest release.
 
 ## Adding payloads
 
 ### Using the page
 
-1. Create a [Fine-Grained Token](https://github.com/settings/personal-access-tokens/new) with access to **only your fork** and the **Contents: Read and write** permission.
-2. Open `https://YOUR-USER.github.io/ps5-personal-payloads-catalog/manage/`, click **Set GitHub token**, paste the token and click **Save**. You only do this once per browser. The token stays saved until it expires or you remove it.
-3. Click **+ Add**, paste one or more GitHub repository URLs (one per line), click **Check**, then **Add**. All of them are saved in a single commit.
-
-Without a token, the page is read-only.
+Click **+ Add**, paste one or more GitHub repository URLs (one per line), click **Check**, then **Add**. All of them are saved in a single commit. The page needs a saved [GitHub token](#github-token); without one it is read-only.
 
 ### Manually
 
 Create a file in the `repos/` folder (for example `owner__repo.txt`) containing the GitHub repository URL, `https://github.com/owner/repo`. A single file can also list several GitHub repositories, one per line. Commit to `main` and the Action updates `payloads.json`.
 
-Either way, you never edit `payloads.json` yourself. It is filled in automatically with the added GitHub repository's information: name, description, file name, version and download link from its latest release. The new payload shows up within a few minutes. The GitHub repository needs a release with a `.elf` or `.bin` file.
+Either way, the new payload shows up within a few minutes. The GitHub repository needs a release with a `.elf` or `.bin` file.
+
+Your fork starts with the original list of tracked GitHub repositories. Remove the ones you don't want from the management page.
 
 ## Using it in the PS5 Payload Manager
 
@@ -39,9 +47,18 @@ In the Payload Manager, add this URL as a repository:
 https://YOUR-USER.github.io/ps5-personal-payloads-catalog/payloads.json
 ```
 
-The page also shows this URL with a **Copy** button. Whenever a tracked GitHub repository publishes a new release, the payload repository is updated automatically within 6 hours, and the Payload Manager will offer the new version.
+The management page also shows this URL with a **Copy** button. Whenever a tracked GitHub repository publishes a new release, the payload repository is updated automatically within 6 hours, and the Payload Manager will offer the new version.
 
-## Updates to the page and the Action
+## GitHub token
+
+The management page needs a [Fine-Grained Personal Access Token](https://github.com/settings/personal-access-tokens/new) to save changes to your fork:
+
+- **Repository access:** *Only select repositories*, with only your fork selected.
+- **Permissions → Contents:** *Read and write*.
+
+You only enter it once per browser. It stays saved there until it expires or you remove it, and it is only ever sent to the GitHub API.
+
+## Code source: upstream or local
 
 `config.json` in your fork sets where the management page and the Action get their code from:
 
