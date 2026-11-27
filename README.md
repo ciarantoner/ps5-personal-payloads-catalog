@@ -1,5 +1,7 @@
 # PS5 Personal Payloads Catalog
 
+> **About the Claude badge in Contributors:** yes, the mark of the beast is there. But rest assured, I'm a developer myself and only used it to speed things up. The ideas and decisions were mine, I reviewed every change, and nothing was done blindly.
+
 Your own **payload repository** for the **PS5 Payload Manager (`pldmgr`)**. In this README, "payload repository" always means the `payloads.json` file you add to the Payload Manager. "GitHub repository" always means a project on GitHub.
 
 You choose which GitHub repositories to track, and a GitHub Action keeps `payloads.json` pointing to the latest `.elf`/`.bin` release of each one. The PS5 Payload Manager can then update your payloads directly on the PS5. There is no need to download files or copy them over by hand.
