@@ -13,6 +13,8 @@ Because the payload repository always points to the latest release of each track
 3. **Settings → Actions → General → Workflow permissions**: select **Read and write permissions**.
 4. **Settings → Pages**: choose **Deploy from a branch**, `main`, `/ (root)`.
 
+Your fork starts with the original list of tracked GitHub repositories. Remove the ones you don't want from the management page.
+
 ## Adding payloads
 
 ### Using the page
