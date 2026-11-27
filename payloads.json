@@ -2,20 +2,12 @@
   "name": "Personal Repository",
   "payloads": [
     {
-      "id": "atreus04-gg-ps5tailscale",
-      "name": "ps5tailscale",
-      "description": "PS5 instance of tailscale",
-      "filename": "ps5tailscale-v1.0.3.elf",
-      "version": "1.0.3-beta",
-      "url": "https://github.com/atreus04-GG/ps5tailscale/releases/download/v1.0.3-beta/ps5tailscale-v1.0.3.elf"
-    },
-    {
-      "id": "felipemelchior-driftcheck5",
-      "name": "driftcheck5",
-      "description": "Controller tester for jailbroken PS5",
-      "filename": "DriftCheck.elf",
-      "version": "01.000.000",
-      "url": "https://github.com/felipemelchior/driftcheck5/releases/download/01.000.000/DriftCheck.elf"
+      "id": "knutwurst-ps5-patchdl",
+      "name": "ps5-patchdl",
+      "description": "Official updates for your PS5 and PS4 games, from any browser. PatchDL runs on the PS5, finds the newest update for every installed game, downloads it with parallel connections and resume, and installs it on the console. Web UI for phone, laptop and TV, plus a home-screen tile. Runs on firmware 1.00 to 13.60.",
+      "filename": "patchdl_0.3.13.elf",
+      "version": "0.3.13",
+      "url": "https://github.com/knutwurst/ps5-patchdl/releases/download/v0.3.13/patchdl_0.3.13.elf"
     },
     {
       "id": "notmaj0r-prosperomgr",
@@ -24,30 +16,6 @@
       "filename": "ProsperoMgr.elf",
       "version": "1.2.1",
       "url": "https://github.com/notmaj0r/ProsperoMgr/releases/download/v1.2.1/ProsperoMgr.elf"
-    },
-    {
-      "id": "porhe911-app-title",
-      "name": "App-Title",
-      "description": "Standalone PS5 ELF payload for game and application title IDs, configurable placement and colours, and a Media settings shortcut.",
-      "filename": "App_Title_v0.2.17.elf",
-      "version": "0.2.17",
-      "url": "https://github.com/porhe911/App-Title/releases/download/v0.2.17/App_Title_v0.2.17.elf"
-    },
-    {
-      "id": "stonedmodder-prospero-menu",
-      "name": "Prospero-Menu",
-      "description": "Community expandable overlay system for homebrewed PS5",
-      "filename": "ProsperoMenu.elf",
-      "version": "1.1.0",
-      "url": "https://github.com/StonedModder/Prospero-Menu/releases/download/v1.1.0/ProsperoMenu.elf"
-    },
-    {
-      "id": "tsuramatsu1-apr-emu-updater",
-      "name": "apr-emu-updater",
-      "description": "PS5 payload that keeps APR Emu up to date on installed titles, from a web interface on the console.",
-      "filename": "apr_emu_updater_v2.0.6.elf",
-      "version": "2.0.6",
-      "url": "https://github.com/tsuramatsu1/apr-emu-updater/releases/download/v2.0.6/apr_emu_updater_v2.0.6.elf"
     },
     {
       "id": "x1nons-prefbar",
