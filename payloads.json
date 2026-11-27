@@ -2,6 +2,22 @@
   "name": "Personal Repository",
   "payloads": [
     {
+      "id": "atreus04-gg-ps5tailscale",
+      "name": "ps5tailscale",
+      "description": "PS5 instance of tailscale",
+      "filename": "ps5tailscale-v1.0.3.elf",
+      "version": "1.0.3-beta",
+      "url": "https://github.com/atreus04-GG/ps5tailscale/releases/download/v1.0.3-beta/ps5tailscale-v1.0.3.elf"
+    },
+    {
+      "id": "felipemelchior-driftcheck5",
+      "name": "driftcheck5",
+      "description": "Controller tester for jailbroken PS5",
+      "filename": "DriftCheck.elf",
+      "version": "01.000.000",
+      "url": "https://github.com/felipemelchior/driftcheck5/releases/download/01.000.000/DriftCheck.elf"
+    },
+    {
       "id": "notmaj0r-prosperomgr",
       "name": "ProsperoMgr",
       "description": "All-In-One manager for your PS5!",
@@ -16,6 +32,14 @@
       "filename": "App_Title_v0.2.17.elf",
       "version": "0.2.17",
       "url": "https://github.com/porhe911/App-Title/releases/download/v0.2.17/App_Title_v0.2.17.elf"
+    },
+    {
+      "id": "stonedmodder-prospero-menu",
+      "name": "Prospero-Menu",
+      "description": "Community expandable overlay system for homebrewed PS5",
+      "filename": "ProsperoMenu.elf",
+      "version": "1.1.0",
+      "url": "https://github.com/StonedModder/Prospero-Menu/releases/download/v1.1.0/ProsperoMenu.elf"
     },
     {
       "id": "tsuramatsu1-apr-emu-updater",
