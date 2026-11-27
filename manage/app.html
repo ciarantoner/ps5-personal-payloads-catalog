@@ -523,7 +523,8 @@
         body: JSON.stringify({ ref: BRANCH }),
       });
       btn.textContent = 'Started ✓';
-      showMsg(msg, 'ok', `Update workflow started. Watch it in <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Actions</a> — payloads.json is refreshed in about a minute, then hit Refresh.`);
+      showMsg(msg, 'ok', `Update workflow started — this page follows it and refreshes the list when done.`);
+      watchUpdate(new Date(Date.now() - 5000), null);
       setTimeout(() => { btn.textContent = 'Run update'; btn.disabled = false; }, 1500);
     } catch (e) {
       btn.disabled = false; btn.textContent = 'Run update';
@@ -602,6 +603,57 @@
     } catch (e) {
       return { label, status: 'err', text: e.status === 404 ? 'Repository not found.' : apiErrorText(e) };
     }
+  }
+
+  // Watches the update workflow (auto-triggered by the push) and the Pages deploy,
+  // then refreshes the list so "pending" badges resolve on their own.
+  async function watchUpdate(startedAt, newKeys) {
+    const msg = $('listMsg');
+    const deadline = Date.now() + 10 * 60 * 1000;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    let run = null;
+    while (Date.now() < deadline) {
+      await sleep(10000);
+      try {
+        const runs = await gh(`/repos/${target.owner}/${target.repo}/actions/runs?per_page=15`);
+        run = (runs.workflow_runs || []).find((w) => /update payloads/i.test(w.name || '') && new Date(w.created_at) >= startedAt) || run;
+        if (run && run.status === 'completed') break;
+        if (run) showMsg(msg, 'info', `Updating payloads.json… the workflow is running. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Watch it</a>.`);
+      } catch {}
+    }
+    if (!run || run.status !== 'completed') {
+      showMsg(msg, 'err', `The update workflow did not finish within 10 minutes. Check it in <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Actions</a>.`);
+      return;
+    }
+    if (run.conclusion !== 'success') {
+      showMsg(msg, 'err', `The update workflow failed (${esc(run.conclusion)}). Check the log in <a href="${esc(run.html_url)}" target="_blank" rel="noopener">GitHub Actions</a>.`);
+      return;
+    }
+    // The workflow committed payloads.json; now wait for the Pages deploy of that commit.
+    let deployed = null;
+    while (Date.now() < deadline) {
+      await sleep(10000);
+      try {
+        const builds = await gh(`/repos/${target.owner}/${target.repo}/pages/builds?per_page=5`);
+        deployed = (builds || []).find((b) => b.status === 'built' && new Date(b.created_at) >= new Date(run.updated_at));
+        if (deployed) break;
+      } catch {}
+    }
+    if (!deployed) { showMsg(msg, 'info', 'The update finished, but the site is still deploying. Hit Refresh in a minute.'); return; }
+    await sleep(20000); // let the CDN pick up the fresh deploy
+    if (newKeys) {
+      while (Date.now() < deadline) {
+        await loadCatalog();
+        if (newKeys.every((k) => catalog[k])) break;
+        await sleep(15000);
+      }
+      if (!newKeys.every((k) => catalog[k])) {
+        showMsg(msg, 'err', `The update ran, but ${esc(newKeys.join(', '))} still isn't in payloads.json. Probably no published release with a .elf or .bin file — check the repo's Releases page.`);
+        return;
+      }
+    }
+    await refresh();
+    showMsg(msg, 'ok', 'payloads.json updated — the list is current now.');
   }
 
   // ---------- Add modal ----------
@@ -750,7 +802,9 @@
       resetAddModal();
       $('addDialog').close();
       await refresh();
-      showMsg($('addMsg'), 'ok', `Added <b>${list.length}</b> ${list.length === 1 ? 'repository' : 'repositories'}: ${names.map(esc).join(', ')}. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> will update payloads.json shortly.`);
+      showMsg($('addMsg'), 'ok', `Added <b>${list.length}</b> ${list.length === 1 ? 'repository' : 'repositories'}: ${names.map(esc).join(', ')}. The <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Action</a> was triggered automatically; this page follows it and refreshes when done.`);
+      // The push itself already triggers the update workflow — just follow it and refresh when done.
+      watchUpdate(new Date(Date.now() - 5000), list.map((p) => `${p.owner}-${p.repo}`.toLowerCase()));
     } catch (e) {
       updateAddButton();
       showMsg($('modalMsg'), 'err', apiErrorText(e));
