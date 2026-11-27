@@ -153,6 +153,7 @@
   ul.repos { transition: opacity .15s; }
   ul.repos.loading { opacity: .45; }
   #refreshBtn { min-width: 108px; }
+  #runUpdateBtn { min-width: 108px; }
   details summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-top: 12px; }
   details .row { margin-top: 10px; }
   @media (max-width: 520px) {
@@ -203,7 +204,7 @@
   </section>
 
   <section id="trackedCard">
-    <h2>Tracked GitHub repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="refreshBtn" class="ghost small" type="button">Refresh</button><button id="openAddBtn" class="small" type="button">+ Add</button></h2>
+    <h2>Tracked GitHub repositories <span id="repoCount" class="badge">0</span><span class="spacer"></span><button id="runUpdateBtn" class="ghost small" type="button" title="Run the Update payloads.json workflow now">Run update</button><button id="refreshBtn" class="ghost small" type="button">Refresh</button><button id="openAddBtn" class="small" type="button">+ Add</button></h2>
     <div class="list-scroll">
       <ul id="repoList" class="repos"><li class="empty">Loading…</li></ul>
     </div>
@@ -507,6 +508,30 @@
     const failed = $('listMsg').classList.contains('err');
     btn.textContent = failed ? 'Refresh' : 'Updated ✓';
     if (!failed) setTimeout(() => { btn.textContent = 'Refresh'; }, 1500);
+  });
+
+  // Manually trigger the "Update payloads.json" workflow (same as the Actions page button).
+  // Needs a token with the "Actions: Read and write" permission, beyond Contents: Read and write.
+  $('runUpdateBtn').addEventListener('click', async () => {
+    const btn = $('runUpdateBtn');
+    const msg = $('listMsg');
+    btn.disabled = true; btn.textContent = 'Starting…';
+    try {
+      await gh(`/repos/${target.owner}/${target.repo}/actions/workflows/update.yml/dispatches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: BRANCH }),
+      });
+      btn.textContent = 'Started ✓';
+      showMsg(msg, 'ok', `Update workflow started. Watch it in <a href="${esc(repoUrl())}/actions" target="_blank" rel="noopener">GitHub Actions</a> — payloads.json is refreshed in about a minute, then hit Refresh.`);
+      setTimeout(() => { btn.textContent = 'Run update'; btn.disabled = false; }, 1500);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Run update';
+      let text = apiErrorText(e);
+      if (e.status === 403) text += ' Triggering the workflow needs a token with the <b>Actions: Read and write</b> permission (in addition to Contents: Read and write). Update your token via <a href="#" data-open-token>token settings</a>.';
+      if (e.status === 404) text += ' Is the workflow enabled on this repository (Actions tab → enable workflows)?';
+      showMsg(msg, 'err', `Could not start the workflow: ${text}`);
+    }
   });
 
   // ---------- Header / URLs ----------
