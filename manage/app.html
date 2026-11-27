@@ -619,6 +619,7 @@
     $('repoInput').focus();
   });
   $('closeAddBtn').addEventListener('click', () => $('addDialog').close());
+  $('addBtn').addEventListener('click', () => addPending());
 
   $('repoInput').addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); $('checkForm').requestSubmit(); }
