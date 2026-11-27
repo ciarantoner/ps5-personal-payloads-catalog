@@ -150,6 +150,9 @@
   .badge.warn { color: var(--warn); border-color: rgba(245, 158, 11, .4); }
   .empty { color: var(--muted); padding: 8px 0; }
   ul.repos li.empty { display: block; }
+  ul.repos { transition: opacity .15s; }
+  ul.repos.loading { opacity: .45; }
+  #refreshBtn { min-width: 108px; }
   details summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-top: 12px; }
   details .row { margin-top: 10px; }
   @media (max-width: 520px) {
@@ -488,7 +491,23 @@
     }
   }
 
-  $('refreshBtn').addEventListener('click', refresh);
+  // Visible feedback: "Refreshing…" while loading (list dimmed), then "Updated ✓" for a moment.
+  $('refreshBtn').addEventListener('click', async () => {
+    const btn = $('refreshBtn');
+    const list = $('repoList');
+    btn.disabled = true;
+    btn.textContent = 'Refreshing…';
+    list.classList.add('loading');
+    const started = Date.now();
+    await refresh();
+    // Keep the state visible for a moment even when the API answers instantly.
+    await new Promise((r) => setTimeout(r, Math.max(0, 400 - (Date.now() - started))));
+    list.classList.remove('loading');
+    btn.disabled = false;
+    const failed = $('listMsg').classList.contains('err');
+    btn.textContent = failed ? 'Refresh' : 'Updated ✓';
+    if (!failed) setTimeout(() => { btn.textContent = 'Refresh'; }, 1500);
+  });
 
   // ---------- Header / URLs ----------
   function renderTarget() {
